@@ -21,11 +21,12 @@
     <string name="retry">Retry</string>
     <string name="artist">Artist</string>
     <string name="track">Track</string>
+    <string name="album">Album</string>
+    <string name="playlist">Playlist</string>
     <string name="play_pause">Play and pause</string>
     <string name="primary">Primary</string>
     <string name="secondary">Secondary</string>
     <string name="navigation">Navigation</string>
-    <string name="album">Album</string>
     <string name="error_unsupported_service">This platform is unsupported.</string>
     <string name="error_age_restricted_content">This content is age restricted and cannot be streamed.</string>
     <string name="error_georestricted_content">This content is not available in your country.</string>
@@ -42,4 +43,5 @@
     <string name="now_playing">Now Playing</string>
     <string name="lyrics">Lyrics</string>
     <string name="add_to_queue">Add to queue</string>
+    <string name="amount">Amount</string>
 </resources>

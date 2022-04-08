@@ -12,12 +12,15 @@ import com.github.aecsocket.himom.App
 import com.github.aecsocket.himom.R
 import com.github.aecsocket.himom.data.ArtistData
 import com.github.aecsocket.himom.data.DataItem
+import com.github.aecsocket.himom.data.ListData
 import com.github.aecsocket.himom.data.StreamData
 import java.lang.IllegalStateException
+import java.util.*
 
 const val ITEM_TYPE_SKELETON = 0
 const val ITEM_TYPE_STREAM = 1
 const val ITEM_TYPE_ARTIST = 2
+const val ITEM_TYPE_LIST = 3
 
 class GenericItemAdapter : ListAdapter<DataItem, GenericItemAdapter.BaseHolder>(DataItem.itemCallback()) {
     init {
@@ -38,10 +41,21 @@ class GenericItemAdapter : ListAdapter<DataItem, GenericItemAdapter.BaseHolder>(
         }
     }
 
-    class StreamHolder(view: View) : BaseHolder(view) {
-        private val player = (view.context.applicationContext as App).player
-        private val addToQueue: ImageButton = view.findViewById(R.id.itemAddToQueue)
+    open class QueuerHolder(view: View) : BaseHolder(view) {
+        val player = (view.context.applicationContext as App).player
+        val addToQueue: ImageButton = view.findViewById(R.id.itemAddToQueue)
 
+        /*
+        TODO: i think when a view gets recycled the tick stays
+        cause it didnt get reset. so reset it in the bind
+         */
+        fun addedToQueue() {
+            addToQueue.setOnClickListener(null)
+            addToQueue.setImageResource(R.drawable.ic_check)
+        }
+    }
+
+    class StreamHolder(view: View) : QueuerHolder(view) {
         override fun bindTo(item: DataItem) {
             super.bindTo(item)
             val stream = item as StreamData
@@ -55,13 +69,9 @@ class GenericItemAdapter : ListAdapter<DataItem, GenericItemAdapter.BaseHolder>(
                     addedToQueue()
                 }
             } else {
+                println("TICK: $stream / ${player.queue.indexOf(stream)?.let { player.queue.getState().value?.items?.get(it) }}")
                 addedToQueue()
             }
-        }
-
-        private fun addedToQueue() {
-            addToQueue.setOnClickListener(null)
-            addToQueue.setImageResource(R.drawable.ic_list_added)
         }
 
         companion object {
@@ -77,10 +87,29 @@ class GenericItemAdapter : ListAdapter<DataItem, GenericItemAdapter.BaseHolder>(
         }
     }
 
+    class ListHolder(view: View) : BaseHolder(view) {
+        private val amount: TextView = view.findViewById(R.id.itemAmount)
+
+        override fun bindTo(item: DataItem) {
+            super.bindTo(item)
+            val list = item as ListData
+            // todo proper formatting
+            amount.text = String.format(Locale.getDefault(), "%,d", list.amount)
+            // TODO: add a playlist to the queue in a LAZY manner???
+            // either way, we need to do networking here to look up playlist items
+        }
+
+        companion object {
+            fun from(parent: ViewGroup): ListHolder = ListHolder(LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_list, parent, false))
+        }
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseHolder {
         return when (viewType) {
             ITEM_TYPE_STREAM -> StreamHolder.from(parent)
             ITEM_TYPE_ARTIST -> ArtistHolder.from(parent)
+            ITEM_TYPE_LIST -> ListHolder.from(parent)
             else -> throw IllegalStateException("cannot create ViewHolder of $viewType")
         }
     }
@@ -93,6 +122,7 @@ class GenericItemAdapter : ListAdapter<DataItem, GenericItemAdapter.BaseHolder>(
         return when (getItem(position)) {
             is StreamData -> ITEM_TYPE_STREAM
             is ArtistData -> ITEM_TYPE_ARTIST
+            is ListData -> ITEM_TYPE_LIST
         }
     }
 

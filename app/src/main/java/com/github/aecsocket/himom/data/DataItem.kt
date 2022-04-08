@@ -89,6 +89,22 @@ data class ArtistData(
     }
 }
 
+// TODO distinction between user playlists and artist albums
+// even though they act the same, they should be visually different
+data class ListData(
+    val name: String,
+    val amount: Long,
+    val art: RequestCreator? = null
+) : DataItem() {
+    override fun getPrimaryText(context: Context) = name
+    override fun getSecondaryText(context: Context) = context.getString(R.string.playlist)
+    override fun getArt(context: Context) = art
+
+    override fun toString(): String {
+        return """ListData('$name' ${if (art != null) " (has art)" else ""})"""
+    }
+}
+
 class UnsupportedServiceException : RuntimeException()
 
 // TODO maybe have multiple items from one Info
