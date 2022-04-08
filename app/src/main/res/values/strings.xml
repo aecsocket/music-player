@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">HiMom</string>
+    <string name="notif_media">Media</string>
+    <string name="notif_media_desc">Notification for media playback control</string>
+    <string name="search">Search</string>
+    <string name="search_hint">Search tracks, artists, albums</string>
+    <string name="stop">Stop</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="buffering">Buffering</string>
+    <string name="skip_next">Skip to Next</string>
+    <string name="skip_previous">Skip to Previous</string>
+    <string name="unknown">Unknown</string>
+    <string name="unknown_artist">Unknown artist</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_library">Library</string>
+    <string name="nav_history">History</string>
+    <string name="nav_queue">Queue</string>
+    <string name="nav_tabs">Navigation tabs</string>
+    <string name="retry">Retry</string>
+    <string name="artist">Artist</string>
+    <string name="track">Track</string>
+    <string name="play_pause">Play and pause</string>
+    <string name="primary">Primary</string>
+    <string name="secondary">Secondary</string>
+    <string name="navigation">Navigation</string>
+    <string name="album">Album</string>
+    <string name="error_unsupported_service">This platform is unsupported.</string>
+    <string name="error_age_restricted_content">This content is age restricted and cannot be streamed.</string>
+    <string name="error_georestricted_content">This content is not available in your country.</string>
+    <string name="error_paid_content">This content is only available to users who have paid.</string>
+    <string name="error_private_content">This content is private.</string>
+    <string name="error_soundcloud_go_plus_content">This is SoundCloud Go+ content.</string>
+    <string name="error_youtube_music_premium_content">This is YouTube Music Premium content.</string>
+    <string name="error_content_not_available">This content is not available.</string>
+    <string name="error_content_not_supported">This content is not supported.</string>
+    <string name="error_generic">An error occurred: %s</string>
+    <string name="error_network">A network error occurred.</string>
+    <string name="unknown_time">--:--</string>
+    <string name="queue">Queue</string>
+    <string name="now_playing">Now Playing</string>
+    <string name="lyrics">Lyrics</string>
+</resources>

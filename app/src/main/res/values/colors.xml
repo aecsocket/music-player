@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="accent">#a8af20</color>
+
+    <color name="bg">#ffffff</color>
+    <color name="bg_alt">#dedede</color>
+    <color name="fg">#000000</color>
+    <color name="fg_alt">#666666</color>
+    <color name="hint">#888888</color>
+    <color name="ripple">#44000000</color>
+    <color name="shimmer">#c2c2c2</color>
+</resources>

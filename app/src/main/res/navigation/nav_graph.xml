@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    app:startDestination="@id/view_pager_fragment">
+
+    <fragment
+        android:id="@+id/view_pager_fragment"
+        android:name="com.github.aecsocket.himom.nav.ViewPagerFragment"
+        tools:layout="@layout/fragment_view_pager">
+        <action
+            android:id="@+id/action_viewPagerFragment_to_homeFragment"
+            app:destination="@id/home_fragment" />
+        <action
+            android:id="@+id/action_view_pager_fragment_to_searchFragment"
+            app:destination="@id/search_fragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/home_fragment"
+        android:name="com.github.aecsocket.himom.nav.HomeFragment">
+        <action
+            android:id="@+id/action_homeFragment_to_libraryFragment"
+            app:destination="@id/library_fragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/library_fragment"
+        android:name="com.github.aecsocket.himom.nav.LibraryFragment"
+        tools:layout="@layout/fragment_library">
+        <action
+            android:id="@+id/action_library_fragment_to_history_fragment"
+            app:destination="@id/history_fragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/history_fragment"
+        android:name="com.github.aecsocket.himom.nav.HistoryFragment" >
+        <action
+            android:id="@+id/action_history_fragment_to_queueFragment"
+            app:destination="@id/queue_fragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/queue_fragment"
+        android:name="com.github.aecsocket.himom.nav.QueueFragment"
+        android:label="QueueFragment" />
+    <fragment
+        android:id="@+id/search_fragment"
+        android:name="com.github.aecsocket.himom.nav.SearchFragment"
+        android:label="SearchFragment" />
+</navigation>

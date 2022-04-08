@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nowPlaying"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <ImageView
+        android:id="@+id/nowPlayingArt"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="32dp"
+        android:layout_weight="1"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/placeholder" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="24dp"
+        android:paddingBottom="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/nowPlayingTrack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:ellipsize="marquee"
+            android:singleLine="true"
+            android:text="@string/track"
+            android:textColor="@color/fg"
+            android:textSize="@dimen/text_size_heading"
+            app:layout_constraintBottom_toTopOf="@+id/nowPlayingArtist"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/nowPlayingArtist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="@string/artist"
+            android:textColor="@color/fg_alt"
+            android:textSize="@dimen/text_size_subheading"
+            app:layout_constraintBottom_toTopOf="@+id/nowPlayingSeek"
+            app:layout_constraintEnd_toStartOf="@+id/nowPlayingDuration"
+            app:layout_constraintStart_toEndOf="@+id/nowPlayingPosition" />
+
+        <ImageButton
+            android:id="@+id/nowPlayingPlayPause"
+            android:layout_width="64dp"
+            android:layout_height="0dp"
+            android:adjustViewBounds="true"
+            android:background="@drawable/ripple_unbounded"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:srcCompat="@drawable/ic_play"
+            app:tint="@color/fg" />
+
+        <ImageButton
+            android:id="@+id/nowPlayingSkipNext"
+            android:layout_width="52dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/ripple_unbounded"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/nowPlayingPlayPause"
+            app:layout_constraintTop_toTopOf="@+id/nowPlayingPlayPause"
+            app:layout_constraintVertical_bias="0.0"
+            app:srcCompat="@drawable/ic_skip_next"
+            app:tint="@color/fg" />
+
+        <ImageButton
+            android:id="@+id/nowPlayingSkipPrevious"
+            android:layout_width="48dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/ripple_unbounded"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toBottomOf="@+id/nowPlayingPlayPause"
+            app:layout_constraintEnd_toStartOf="@+id/nowPlayingPlayPause"
+            app:layout_constraintTop_toTopOf="@+id/nowPlayingPlayPause"
+            app:srcCompat="@drawable/ic_skip_previous"
+            app:tint="@color/fg" />
+
+        <ImageButton
+            android:id="@+id/nowPlayingRepeat"
+            android:layout_width="48dp"
+            android:layout_height="0dp"
+            android:background="@drawable/ripple_unbounded"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/nowPlayingSkipNext"
+            app:layout_constraintTop_toTopOf="@+id/nowPlayingSkipNext"
+            app:srcCompat="@drawable/ic_repeat"
+            app:tint="@color/fg" />
+
+        <ImageButton
+            android:id="@+id/nowPlayingShuffle"
+            android:layout_width="48dp"
+            android:layout_height="0dp"
+            android:background="@drawable/ripple_unbounded"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toBottomOf="@+id/nowPlayingSkipPrevious"
+            app:layout_constraintEnd_toStartOf="@+id/nowPlayingSkipPrevious"
+            app:layout_constraintTop_toTopOf="@+id/nowPlayingSkipPrevious"
+            app:srcCompat="@drawable/ic_shuffle_off"
+            app:tint="@color/fg" />
+
+        <SeekBar
+            android:id="@+id/nowPlayingSeek"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="16dp"
+            android:progressBackgroundTint="@color/bg_alt"
+            android:progressTint="@color/fg"
+            android:secondaryProgressTint="@color/fg"
+            android:thumbTint="@color/accent"
+            app:layout_constraintBottom_toTopOf="@+id/nowPlayingPlayPause"
+            app:layout_constraintEnd_toStartOf="@+id/nowPlayingDuration"
+            app:layout_constraintStart_toEndOf="@+id/nowPlayingPosition" />
+
+        <TextView
+            android:id="@+id/nowPlayingPosition"
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:ellipsize="none"
+            android:gravity="right|center_vertical"
+            android:singleLine="true"
+            android:text="@string/unknown_time"
+            app:layout_constraintBottom_toBottomOf="@+id/nowPlayingSeek"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/nowPlayingSeek" />
+
+        <TextView
+            android:id="@+id/nowPlayingDuration"
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="none"
+            android:gravity="left|center_vertical"
+            android:singleLine="true"
+            android:text="@string/unknown_time"
+            app:layout_constraintBottom_toBottomOf="@+id/nowPlayingSeek"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/nowPlayingSeek" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</LinearLayout>
