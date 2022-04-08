@@ -41,4 +41,5 @@
     <string name="queue">Queue</string>
     <string name="now_playing">Now Playing</string>
     <string name="lyrics">Lyrics</string>
+    <string name="add_to_queue">Add to queue</string>
 </resources>

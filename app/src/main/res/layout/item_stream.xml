@@ -40,7 +40,7 @@
         android:text="@string/primary"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/itemSecondary"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/itemAddToQueue"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/itemArtContainer"
         app:layout_constraintTop_toTopOf="@+id/itemArtContainer"
@@ -57,8 +57,21 @@
         android:text="@string/secondary"
         android:textColor="@color/fg_alt"
         app:layout_constraintBottom_toBottomOf="@+id/itemArtContainer"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/itemAddToQueue"
         app:layout_constraintStart_toEndOf="@+id/itemArtContainer"
         app:layout_constraintTop_toBottomOf="@+id/itemPrimary" />
 
+    <ImageButton
+        android:id="@+id/itemAddToQueue"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/ripple_unbounded"
+        android:contentDescription="@string/add_to_queue"
+        android:padding="12dp"
+        app:tint="@color/fg"
+        app:layout_constraintBottom_toBottomOf="@+id/itemSecondary"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/itemPrimary"
+        app:srcCompat="@drawable/ic_list_add" />
 </androidx.constraintlayout.widget.ConstraintLayout>

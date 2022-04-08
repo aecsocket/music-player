@@ -47,7 +47,7 @@ class MediaService : LifecycleService() {
         player = (application as App).player
         val stream = getStream()
         player.getCurrent().observe(this) { updateStream(it) }
-        player.getState().observe(this) { updateState(it) }
+        player.getState().observe(this) { updateState() }
 
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -153,7 +153,7 @@ class MediaService : LifecycleService() {
         }
     }
 
-    private fun updateState(state: Int) {
+    private fun updateState() {
         updateNotif(getStream())
     }
 

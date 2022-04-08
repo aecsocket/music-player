@@ -33,7 +33,7 @@ class PagerFragment : Fragment() {
         val context = context ?: return binding.root
 
         val contentPager = binding.contentPager.apply {
-            isUserInputEnabled = false // disable swipe to change tab
+            isUserInputEnabled = false
             adapter = PagerAdapter.Content(this@PagerFragment)
         }
         val navTabs = binding.navTabs
@@ -48,6 +48,7 @@ class PagerFragment : Fragment() {
         }.attach()
 
         val sheetPager = binding.sheetPager.apply {
+            isUserInputEnabled = false
             adapter = PagerAdapter.Sheet(this@PagerFragment)
         }
         sheetPager.currentItem = SHEET_NOW_PLAYING
@@ -97,7 +98,7 @@ class PagerFragment : Fragment() {
             }
             WindowInsetsCompat.CONSUMED
         }
-        ViewCompat.setOnApplyWindowInsetsListener(binding.sheetContent) { view, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.sheetContent) { _, insets ->
             // updates the height to match the screen...
             // ... - nav - status bars
             // ... - nav tabs
