@@ -21,11 +21,9 @@ class SearchViewModel : ViewModel() {
     fun getResults(): LiveData<List<DataItem>> = results
 
     fun loadResults(query: String, lifecycleScope: LifecycleCoroutineScope) {
-        println("query = $query")
         results.postValue(emptyList())
         try {
             val service = NewPipe.getServiceByUrl(query)
-            println("service = $service")
             lifecycleScope.launch(Dispatchers.IO) {
                 DataItem.fromUrl(query, service).collect {
                     results.postValue((results.value ?: emptyList()) + it)

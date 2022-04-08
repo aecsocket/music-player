@@ -17,6 +17,7 @@ import com.github.aecsocket.himom.data.StreamData
 import java.lang.IllegalStateException
 import java.util.*
 
+// todo skeleton and stuff
 const val ITEM_TYPE_SKELETON = 0
 const val ITEM_TYPE_STREAM = 1
 const val ITEM_TYPE_ARTIST = 2
@@ -41,37 +42,35 @@ class GenericItemAdapter : ListAdapter<DataItem, GenericItemAdapter.BaseHolder>(
         }
     }
 
-    open class QueuerHolder(view: View) : BaseHolder(view) {
+    abstract class QueuerHolder(view: View) : BaseHolder(view) {
         val player = (view.context.applicationContext as App).player
         val addToQueue: ImageButton = view.findViewById(R.id.itemAddToQueue)
-
-        /*
-        TODO: i think when a view gets recycled the tick stays
-        cause it didnt get reset. so reset it in the bind
-         */
-        fun addedToQueue() {
-            addToQueue.setOnClickListener(null)
-            addToQueue.setImageResource(R.drawable.ic_check)
-        }
     }
 
     class StreamHolder(view: View) : QueuerHolder(view) {
         override fun bindTo(item: DataItem) {
             super.bindTo(item)
             val stream = item as StreamData
-            base.setOnClickListener {
-                player.queue.addOrSelect(stream)
-                addedToQueue()
-            }
+
+            // TODO live update this depending on queue change.
+            // will have to be done in the search view
             if (player.queue.indexOf(stream) == null) {
+                addToQueue.setImageResource(R.drawable.ic_list_add)
+                base.setOnClickListener {
+                    player.queue.addOrSelect(stream)
+                    added()
+                }
                 addToQueue.setOnClickListener {
                     player.queue.addUnique(stream)
-                    addedToQueue()
+                    added()
                 }
             } else {
-                println("TICK: $stream / ${player.queue.indexOf(stream)?.let { player.queue.getState().value?.items?.get(it) }}")
-                addedToQueue()
+                addToQueue.setImageResource(R.drawable.ic_check)
             }
+        }
+
+        private fun added() {
+            addToQueue.setImageResource(R.drawable.ic_check)
         }
 
         companion object {

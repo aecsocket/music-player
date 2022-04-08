@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.schabi.newpipe.extractor.NewPipe
 
 class RouterActivity : AppCompatActivity() {
     private var url = ""
@@ -32,25 +33,27 @@ class RouterActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        /*val queue = (application as App).player.queue
-        Toast.makeText(this@RouterActivity, "Collecting", Toast.LENGTH_SHORT).show()
-        lifecycleScope.launch(Dispatchers.IO) {
-            DataItem.fromUrl(url) {
-                lifecycleScope.launch(Dispatchers.Main) {
-                    Toast.makeText(this@RouterActivity, "finished", Toast.LENGTH_SHORT).show()
-                }
-            }.collect {
-                if (it is StreamData) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@RouterActivity, "Collected one", Toast.LENGTH_SHORT).show()
-                        if (queue.getState().value?.items?.isNotEmpty() == true) {
-                            queue.addUnique(it)
-                        } else {
-                            queue.addOrSelect(it)
+        val queue = (application as App).player.queue
+        val service = NewPipe.getServiceByUrl(url)
+        if (service == null) {
+            Toast.makeText(this, getString(R.string.error_unsupported_service), Toast.LENGTH_LONG).show()
+        } else {
+            lifecycleScope.launch(Dispatchers.IO) {
+                DataItem.fromUrl(url, service) {
+                    lifecycleScope.launch(Dispatchers.Main) { finish()  }
+                }.collect {
+                    if (it is StreamData) {
+                        withContext(Dispatchers.Main) {
+                            if (queue.getState().value?.items?.isNotEmpty() == true) {
+                                queue.addUnique(it)
+                            } else {
+                                queue.addOrSelect(it)
+                            }
                         }
                     }
                 }
             }
-        }*/
+        }
+
     }
 }
