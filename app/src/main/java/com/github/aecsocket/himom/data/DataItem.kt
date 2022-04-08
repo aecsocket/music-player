@@ -9,7 +9,6 @@ import com.squareup.picasso.Picasso
 import com.squareup.picasso.RequestCreator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.playlist.PlaylistInfo
 import org.schabi.newpipe.extractor.stream.StreamInfo
@@ -31,43 +30,22 @@ sealed class DataItem(
             override fun areContentsTheSame(oldItem: T, newItem: T): Boolean = oldItem == newItem
         }
 
-        class UnsupportedServiceException : RuntimeException()
-
         @Suppress("BlockingMethodInNonBlockingContext")
-        fun fromUrl(url: String, onComplete: () -> Unit = {}): Flow<DataItem> = flow {
-            val service = NewPipe.getServiceByUrl(url)
+        fun fromUrl(url: String, service: StreamingService, onComplete: () -> Unit = {}): Flow<DataItem> = flow {
             when (service.getLinkTypeByUrl(url)) {
                 StreamingService.LinkType.NONE, StreamingService.LinkType.CHANNEL ->
                     throw UnsupportedServiceException()
                 // todo make better
                 StreamingService.LinkType.STREAM -> {
-                    val info = StreamInfo.getInfo(url)
-                    if (info.audioStreams.size > 0) {
-                        val stream = info.audioStreams[0]
-                        emit(StreamData(
-                            MediaItem.fromUri(stream.url),
-                            info.name,
-                            info.uploaderName,
-                            Picasso.get().load(info.thumbnailUrl)
-                        ))
-                        onComplete()
-                    }
+                    StreamInfo.getInfo(url).asItems().forEach { emit(it) }
+                    onComplete()
                 }
                 StreamingService.LinkType.PLAYLIST -> {
                     var curUrl: String? = url
                     while (curUrl != null) {
                         val playlist = PlaylistInfo.getInfo(curUrl)
-                        playlist.relatedItems.forEach {
-                            val streamInfo = StreamInfo.getInfo(it.url)
-                            if (streamInfo.audioStreams.size > 0) {
-                                val stream = streamInfo.audioStreams[0]
-                                emit(StreamData(
-                                    MediaItem.fromUri(stream.url),
-                                    streamInfo.name,
-                                    streamInfo.uploaderName,
-                                    Picasso.get().load(streamInfo.thumbnailUrl)
-                                ))
-                            }
+                        playlist.relatedItems.forEach { stream ->
+                            StreamInfo.getInfo(stream.url).asItems().forEach { emit(it) }
                         }
                         curUrl = if (playlist.hasNextPage()) playlist.nextPage.url else null
                     }
@@ -109,4 +87,17 @@ data class ArtistData(
     override fun toString(): String {
         return """ArtistData('$name' ${if (art != null) " (has art)" else ""})"""
     }
+}
+
+class UnsupportedServiceException : RuntimeException()
+
+// TODO maybe have multiple items from one Info
+fun StreamInfo.asItems(): List<StreamData> {
+    if (audioStreams.size > 0) {
+        val stream = audioStreams[0]
+        return listOf(StreamData(
+            MediaItem.fromUri(stream.url), name, uploaderName, Picasso.get().load(thumbnailUrl)
+        ))
+    }
+    return emptyList()
 }

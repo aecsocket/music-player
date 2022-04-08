@@ -1,4 +1,4 @@
-package com.github.aecsocket.himom
+package com.github.aecsocket.himom.media
 
 import android.content.Context
 import android.widget.Toast

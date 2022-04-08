@@ -29,9 +29,10 @@ class QueueItemAdapter : ListAdapter<StreamData, QueueItemAdapter.ViewHolder>(Da
             primary.text = item.getPrimaryText(context)
             secondary.text = item.getSecondaryText(context)
             item.getArt(context)?.placeholder(R.drawable.placeholder)?.into(art)
-            base.setOnClickListener {
-                player.queue.setIndex(layoutPosition)
+            base.apply {
+                setOnClickListener { player.queue.setIndex(layoutPosition) }
             }
+
         }
     }
 

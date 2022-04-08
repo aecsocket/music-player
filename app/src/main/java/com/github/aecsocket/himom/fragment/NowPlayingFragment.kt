@@ -120,7 +120,6 @@ class NowPlayingFragment : Fragment() {
             skipNext.setOnClickListener { context.sendBroadcast(Intent(ACTION_SKIP_NEXT)) }
 
             player.getCurrent().observe(lifecycleOwner) { stream ->
-                println("RECV stream")
                 track.text = stream.getPrimaryText(context)
                 artist.text = stream.getSecondaryText(context)
                 stream.art?.let { App.setupRequest(it).into(art) }
