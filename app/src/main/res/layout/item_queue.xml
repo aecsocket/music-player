@@ -68,7 +68,7 @@
         android:contentDescription="@string/drag_to_move"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
-        android:tint="?attr/fg"
+        app:tint="?attr/fg"
         app:layout_constraintBottom_toBottomOf="@+id/itemSecondary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/itemPrimary"
