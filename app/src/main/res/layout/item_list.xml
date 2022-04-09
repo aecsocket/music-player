@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/item"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="@dimen/item_list_height"
     android:background="@drawable/ripple_bounded"
     android:clickable="true"
     android:focusable="true">
@@ -12,7 +11,7 @@
     <androidx.cardview.widget.CardView
         android:id="@+id/itemArtContainer"
         android:layout_width="0dp"
-        android:layout_height="52dp"
+        android:layout_height="0dp"
         android:layout_margin="8dp"
         app:cardCornerRadius="3dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -24,7 +23,8 @@
             android:id="@+id/itemArt"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/bg_alt"
+            android:background="?attr/bg_alt"
+            android:contentDescription="@string/art"
             android:scaleType="centerCrop"
             app:srcCompat="@drawable/placeholder" />
     </androidx.cardview.widget.CardView>
@@ -36,10 +36,11 @@
         android:layout_marginEnd="8dp"
         android:gravity="center|clip_vertical"
         android:text="@string/amount"
+        android:textColor="?attr/fg"
         android:textSize="@dimen/text_size_subheading"
-        app:layout_constraintBottom_toBottomOf="@+id/itemArtContainer"
+        app:layout_constraintBottom_toBottomOf="@+id/itemSecondary"
         app:layout_constraintEnd_toStartOf="@+id/itemAddToQueue"
-        app:layout_constraintTop_toTopOf="@+id/itemArtContainer" />
+        app:layout_constraintTop_toTopOf="@+id/itemPrimary" />
 
     <TextView
         android:id="@+id/itemPrimary"
@@ -50,6 +51,8 @@
         android:gravity="bottom"
         android:singleLine="true"
         android:text="@string/primary"
+        android:textColor="?attr/fg"
+        android:textSize="@dimen/text_size"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/itemSecondary"
         app:layout_constraintEnd_toStartOf="@+id/itemAmount"
@@ -62,15 +65,14 @@
         android:id="@+id/itemSecondary"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
         android:gravity="top"
         android:singleLine="true"
         android:text="@string/secondary"
-        android:textColor="@color/fg_alt"
+        android:textColor="?attr/fg_alt"
+        android:textSize="@dimen/text_size"
         app:layout_constraintBottom_toBottomOf="@+id/itemArtContainer"
-        app:layout_constraintEnd_toStartOf="@+id/itemAmount"
-        app:layout_constraintStart_toEndOf="@+id/itemArtContainer"
+        app:layout_constraintEnd_toEndOf="@+id/itemPrimary"
+        app:layout_constraintStart_toStartOf="@+id/itemPrimary"
         app:layout_constraintTop_toBottomOf="@+id/itemPrimary" />
 
     <ImageButton
@@ -79,11 +81,11 @@
         android:layout_height="0dp"
         android:layout_marginEnd="8dp"
         android:background="@drawable/ripple_unbounded"
-        android:contentDescription="@string/add_to_queue"
+        android:contentDescription="@string/queue_add"
         android:padding="12dp"
-        app:tint="@color/fg"
-        app:layout_constraintBottom_toBottomOf="@+id/itemSecondary"
+        app:layout_constraintBottom_toBottomOf="@+id/itemAmount"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/itemPrimary"
-        app:srcCompat="@drawable/ic_list_add" />
+        app:layout_constraintTop_toTopOf="@+id/itemAmount"
+        app:srcCompat="@drawable/ic_list_add"
+        app:tint="?attr/fg" />
 </androidx.constraintlayout.widget.ConstraintLayout>

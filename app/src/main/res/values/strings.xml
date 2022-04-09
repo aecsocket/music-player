@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">HiMom</string>
+    <string name="app_name" translatable="false">MPlayer</string>
     <string name="notif_media">Media</string>
     <string name="notif_media_desc">Notification for media playback control</string>
     <string name="search">Search</string>
@@ -19,6 +19,7 @@
     <string name="nav_queue">Queue</string>
     <string name="nav_tabs">Navigation tabs</string>
     <string name="retry">Retry</string>
+    <string name="details">Details</string>
     <string name="artist">Artist</string>
     <string name="track">Track</string>
     <string name="album">Album</string>
@@ -36,12 +37,20 @@
     <string name="error_youtube_music_premium_content">This is YouTube Music Premium content.</string>
     <string name="error_content_not_available">This content is not available.</string>
     <string name="error_content_not_supported">This content is not supported.</string>
-    <string name="error_generic">An error occurred: %s</string>
+    <string name="error_generic">An error occurred.</string>
     <string name="error_network">A network error occurred.</string>
     <string name="unknown_time">--:--</string>
     <string name="queue">Queue</string>
     <string name="now_playing">Now Playing</string>
     <string name="lyrics">Lyrics</string>
-    <string name="add_to_queue">Add to queue</string>
     <string name="amount">Amount</string>
+    <string name="repeat">Repeat</string>
+    <string name="shuffle">Shuffle</string>
+    <string name="art">Art</string>
+    <string name="live">LIVE</string>
+    <string name="drag_to_move">Drag to move</string>
+    <string name="queue_add">Add to queue</string>
+    <string name="queue_clear">Clear queue</string>
+    <string name="queue_jump">Jump to current item</string>
+    <string name="open_with">Open with</string>
 </resources>

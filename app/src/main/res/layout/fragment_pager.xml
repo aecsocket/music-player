@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Background"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -27,15 +27,15 @@
             android:id="@+id/mediaSheet"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/bg"
+            android:background="?attr/bg"
             app:behavior_hideable="true"
             app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/sheetBar"
                 android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:background="@color/bg_alt"
+                android:layout_height="@dimen/sheet_bar_height"
+                android:background="?attr/bg_alt"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
@@ -75,7 +75,8 @@
                     android:scrollHorizontally="true"
                     android:singleLine="true"
                     android:text="@string/track"
-                    android:textColor="@color/fg"
+                    android:textColor="?attr/fg"
+                    android:textSize="@dimen/text_size"
                     android:textStyle="bold"
                     app:layout_constraintBottom_toTopOf="@+id/mediaArtist"
                     app:layout_constraintEnd_toStartOf="@+id/mediaPlayPause"
@@ -92,7 +93,8 @@
                     android:gravity="top"
                     android:singleLine="true"
                     android:text="@string/artist"
-                    android:textColor="@color/fg_alt"
+                    android:textColor="?attr/fg_alt"
+                    android:textSize="@dimen/text_size"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/mediaPlayPause"
                     app:layout_constraintStart_toEndOf="@+id/mediaArtContainer"
@@ -100,35 +102,35 @@
 
                 <ImageButton
                     android:id="@+id/mediaPlayPause"
-                    android:layout_width="0dp"
+                    style="@style/ImageButton.Bounded"
+                    android:layout_width="wrap_content"
                     android:layout_height="0dp"
-                    android:background="@drawable/ripple_bounded"
                     android:contentDescription="@string/play_pause"
-                    android:padding="16dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
                     android:scaleType="fitCenter"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintDimensionRatio="H,1:1"
                     app:layout_constraintEnd_toStartOf="@+id/mediaSkipNext"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintVertical_bias="0.0"
                     app:srcCompat="@drawable/ic_play"
-                    app:tint="@color/fg" />
+                    app:tint="?attr/fg" />
 
                 <ImageButton
                     android:id="@+id/mediaSkipNext"
-                    android:layout_width="0dp"
+                    style="@style/ImageButton.Bounded"
+                    android:layout_width="wrap_content"
                     android:layout_height="0dp"
-                    android:background="@drawable/ripple_bounded"
                     android:contentDescription="@string/skip_next"
-                    android:padding="16dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
                     android:scaleType="fitCenter"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintDimensionRatio="H,1:1"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintVertical_bias="0.0"
                     app:srcCompat="@drawable/ic_skip_next"
-                    app:tint="@color/fg" />
+                    app:tint="?attr/fg" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -144,18 +146,20 @@
                     android:id="@+id/sheetTabs"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:background="?attr/bg"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:tabIndicatorColor="@color/accent"
+                    app:tabIndicatorColor="?attr/accent"
                     app:tabIndicatorGravity="top"
-                    app:tabSelectedTextColor="@color/fg"
-                    app:tabTextColor="@color/fg_alt" />
+                    app:tabSelectedTextColor="?attr/fg"
+                    app:tabTextColor="?attr/fg_alt" />
 
                 <androidx.viewpager2.widget.ViewPager2
                     android:id="@+id/sheetPager"
                     android:layout_width="0dp"
                     android:layout_height="500dp"
+                    android:background="?attr/bg"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toStartOf="parent"
@@ -171,15 +175,15 @@
         android:id="@+id/navTabs"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:background="@color/bg_alt"
+        android:background="?attr/bg_alt"
         android:contentDescription="@string/navigation"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:tabIconTint="@color/fg"
-        app:tabIndicatorColor="@color/accent"
+        app:tabIconTint="?attr/fg"
+        app:tabIndicatorColor="?attr/accent"
         app:tabIndicatorFullWidth="true"
         app:tabIndicatorGravity="top"
-        app:tabTextColor="@color/fg" />
+        app:tabTextColor="?attr/fg" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,16 +1,42 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.HiMom" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/accent</item>
-        <item name="background">@color/bg</item>
+    <style name="Base.Parent" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="accent">@color/accent</item>
+        <item name="colorPrimary">?attr/accent</item>
+
         <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@color/bg_alt</item>
-        <item name="android:textColor">@color/fg</item>
-        <item name="android:textColorHint">@color/hint</item>
-        <item name="android:textSize">@dimen/text_size</item>
+        <item name="android:navigationBarColor">?attr/bg_alt</item>
     </style>
 
-    <style name="Base.Theme.HiMom" parent="Theme.HiMom">
+    <style name="Base.Light" parent="Base.Parent">
+        <item name="bg">@color/bg_light</item>
+        <item name="bg_alt">@color/bg_alt_light</item>
+        <item name="fg">@color/fg_light</item>
+        <item name="fg_alt">@color/fg_alt_light</item>
+        <item name="ripple">@color/ripple_light</item>
+
         <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="O_MR1">true</item>
+    </style>
+
+    <style name="Base.Dark" parent="Base.Parent">
+        <item name="bg">@color/bg_dark</item>
+        <item name="bg_alt">@color/bg_alt_dark</item>
+        <item name="fg">@color/fg_dark</item>
+        <item name="fg_alt">@color/fg_alt_dark</item>
+        <item name="ripple">@color/ripple_dark</item>
+    </style>
+
+    <style name="Base" parent="Base.Light" />
+
+    <style name="Background" parent="Base">
+        <item name="android:background">?attr/bg</item>
+    </style>
+
+    <style name="ImageButton.Bounded" parent="Widget.AppCompat.ImageButton">
+        <item name="android:background">@drawable/ripple_bounded</item>
+    </style>
+
+    <style name="ImageButton.Unbounded" parent="Widget.AppCompat.ImageButton">
+        <item name="android:background">@drawable/ripple_unbounded</item>
     </style>
 </resources>

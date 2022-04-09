@@ -5,31 +5,33 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!--<com.facebook.shimmer.ShimmerFrameLayout
-        android:id="@+id/searchItemsSkeleton"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/searchItemsShimmer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:clipToPadding="false"
         android:paddingTop="64dp"
-        tools:visibility="gone">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <include layout="@layout/item_generic_skeleton" />
+            <include layout="@layout/item_skeleton" />
 
-            <include layout="@layout/item_generic_skeleton" />
+            <include layout="@layout/item_skeleton" />
 
-            <include layout="@layout/item_generic_skeleton" />
+            <include layout="@layout/item_skeleton" />
 
-            <include layout="@layout/item_generic_skeleton" />
+            <include layout="@layout/item_skeleton" />
 
-            <include layout="@layout/item_generic_skeleton" />
+            <include layout="@layout/item_skeleton" />
         </LinearLayout>
 
-    </com.facebook.shimmer.ShimmerFrameLayout>-->
+    </com.facebook.shimmer.ShimmerFrameLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/searchItems"
@@ -43,7 +45,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:listitem="@layout/item_generic" />
+        tools:listitem="@layout/item_skeleton" />
 
     <FrameLayout
         android:id="@+id/searchBarContainer"
@@ -58,7 +60,7 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_margin="8dp"
-            android:background="@drawable/bg_rounded"
+            android:background="@drawable/bg_alt_capsule"
             android:elevation="10dp">
 
             <ImageButton
@@ -72,8 +74,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="0.0"
-                app:srcCompat="@drawable/ic_search"
-                app:tint="@color/fg" />
+                app:srcCompat="@drawable/ic_search" />
 
             <EditText
                 android:id="@+id/searchField"
@@ -84,9 +85,10 @@
                 android:hint="@string/search_hint"
                 android:imeOptions="actionSearch"
                 android:importantForAutofill="no"
-                android:inputType="textPersonName"
-                android:paddingTop="12dp"
-                android:paddingBottom="12dp"
+                android:inputType="textNoSuggestions|textPersonName"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:textColorHint="?attr/fg_alt"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/searchAction"

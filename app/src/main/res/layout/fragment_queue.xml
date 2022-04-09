@@ -15,5 +15,36 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:listitem="@layout/item_generic" />
+        tools:listitem="@layout/item_skeleton">
+
+    </androidx.recyclerview.widget.RecyclerView>
+
+    <ImageButton
+        android:id="@+id/queueClearAll"
+        android:layout_width="48dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/bg_capsule"
+        android:contentDescription="@string/queue_clear"
+        android:elevation="10dp"
+        app:layout_constraintDimensionRatio="H,1:1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_clear" />
+
+    <ImageButton
+        android:id="@+id/queueJump"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_capsule"
+        android:contentDescription="@string/queue_jump"
+        android:elevation="10dp"
+        app:layout_constraintDimensionRatio="H,1:1"
+        app:layout_constraintEnd_toEndOf="@+id/queueClearAll"
+        app:layout_constraintStart_toStartOf="@+id/queueClearAll"
+        app:layout_constraintTop_toBottomOf="@+id/queueClearAll"
+        app:srcCompat="@drawable/ic_location" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

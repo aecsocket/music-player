@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="accent" format="color" />
+    <attr name="bg" format="color" />
+    <attr name="bg_alt" format="color" />
+    <attr name="fg" format="color" />
+    <attr name="fg_alt" format="color" />
+    <attr name="ripple" format="color" />
+    <attr name="shimmer" format="color" />
+</resources>

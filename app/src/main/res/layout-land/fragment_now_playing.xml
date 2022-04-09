@@ -5,14 +5,15 @@
     android:id="@+id/nowPlaying"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="horizontal">
 
     <ImageView
         android:id="@+id/nowPlayingArt"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
         android:layout_marginTop="32dp"
-        android:layout_weight="1"
+        android:layout_marginBottom="32dp"
+        android:layout_weight="3"
         android:adjustViewBounds="true"
         android:contentDescription="@string/album"
         android:scaleType="fitCenter"
@@ -20,8 +21,9 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="5"
         android:paddingTop="24dp"
         android:paddingBottom="32dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -48,13 +50,15 @@
             android:id="@+id/nowPlayingArtist"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
             android:layout_marginBottom="16dp"
             android:text="@string/artist"
             android:textColor="?attr/fg"
             android:textSize="@dimen/text_size_subheading"
-            app:layout_constraintBottom_toTopOf="@+id/nowPlayingTime"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintBottom_toTopOf="@+id/nowPlayingSeek"
+            app:layout_constraintEnd_toStartOf="@+id/nowPlayingDuration"
+            app:layout_constraintStart_toEndOf="@+id/nowPlayingPosition" />
 
         <ImageButton
             android:id="@+id/nowPlayingPlayPause"
@@ -130,84 +134,46 @@
             app:srcCompat="@drawable/ic_shuffle_off"
             app:tint="?attr/fg" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/nowPlayingTime"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/time_bar_height"
+        <SeekBar
+            android:id="@+id/nowPlayingSeek"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
             android:layout_marginBottom="16dp"
+            android:progressBackgroundTint="?attr/bg_alt"
+            android:progressTint="?attr/fg"
+            android:secondaryProgressTint="?attr/fg"
+            android:thumbTint="@color/accent"
             app:layout_constraintBottom_toTopOf="@+id/nowPlayingPlayPause"
+            app:layout_constraintEnd_toStartOf="@+id/nowPlayingDuration"
+            app:layout_constraintStart_toEndOf="@+id/nowPlayingPosition" />
+
+        <TextView
+            android:id="@+id/nowPlayingPosition"
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:ellipsize="none"
+            android:gravity="center_vertical|end"
+            android:singleLine="true"
+            android:text="@string/unknown_time"
+            app:layout_constraintBottom_toBottomOf="@+id/nowPlayingSeek"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/nowPlayingSeek" />
+
+        <TextView
+            android:id="@+id/nowPlayingDuration"
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="none"
+            android:gravity="start|center_vertical"
+            android:singleLine="true"
+            android:text="@string/unknown_time"
+            app:layout_constraintBottom_toBottomOf="@+id/nowPlayingSeek"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/nowPlayingTimeDeterminate"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <SeekBar
-                    android:id="@+id/nowPlayingSeek"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginEnd="8dp"
-                    android:progressBackgroundTint="?attr/bg_alt"
-                    android:progressTint="?attr/fg"
-                    android:secondaryProgressTint="?attr/fg"
-                    android:thumbTint="@color/accent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/nowPlayingDuration"
-                    app:layout_constraintHorizontal_bias="0.0"
-                    app:layout_constraintStart_toEndOf="@+id/nowPlayingPosition"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <TextView
-                    android:id="@+id/nowPlayingPosition"
-                    android:layout_width="48dp"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="16dp"
-                    android:ellipsize="none"
-                    android:gravity="center_vertical|end"
-                    android:singleLine="true"
-                    android:text="@string/unknown_time"
-                    app:layout_constraintBottom_toBottomOf="@+id/nowPlayingSeek"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="@+id/nowPlayingSeek" />
-
-                <TextView
-                    android:id="@+id/nowPlayingDuration"
-                    android:layout_width="48dp"
-                    android:layout_height="0dp"
-                    android:layout_marginEnd="16dp"
-                    android:ellipsize="none"
-                    android:gravity="start|center_vertical"
-                    android:singleLine="true"
-                    android:text="@string/unknown_time"
-                    app:layout_constraintBottom_toBottomOf="@+id/nowPlayingSeek"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="@+id/nowPlayingSeek" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <TextView
-                android:id="@+id/nowPlayingLive"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:background="@color/live"
-                android:gravity="center"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:text="@string/live"
-                android:textColor="?attr/fg"
-                app:layout_constraintBottom_toBottomOf="@+id/nowPlayingTimeDeterminate"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
+            app:layout_constraintTop_toTopOf="@+id/nowPlayingSeek" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </LinearLayout>

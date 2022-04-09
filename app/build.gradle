@@ -15,7 +15,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.github.aecsocket.himom"
+        applicationId "com.github.aecsocket.player"
         minSdk 24
         targetSdk 31
         versionCode 1
@@ -62,7 +62,7 @@ dependencies {
     implementation 'com.github.TeamNewPipe:NewPipeExtractor:v0.21.14'
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.picasso:picasso:2.71828'
-    //implementation 'com.facebook.shimmer:shimmer:0.5.0'
+    implementation 'com.facebook.shimmer:shimmer:0.5.0'
 }
 
 //kapt {
