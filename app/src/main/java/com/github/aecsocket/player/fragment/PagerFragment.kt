@@ -1,33 +1,36 @@
 package com.github.aecsocket.player.fragment
 
+import android.content.Context
 import android.content.Intent
-import android.content.res.ColorStateList
-import android.graphics.BlendModeColorFilter
-import android.graphics.PorterDuff
-import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.graphics.BlendModeColorFilterCompat
-import androidx.core.graphics.BlendModeCompat
-import androidx.core.view.ViewCompat
+import androidx.core.view.MarginLayoutParamsCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
+import androidx.viewpager2.widget.ViewPager2
 import com.github.aecsocket.player.*
 import com.github.aecsocket.player.databinding.FragmentPagerBinding
 import com.github.aecsocket.player.media.DURATION_LIVE
 import com.github.aecsocket.player.media.DURATION_UNKNOWN
-import com.google.android.exoplayer2.C
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.tabs.TabLayoutMediator
 import java.lang.IndexOutOfBoundsException
 
 class PagerFragment : Fragment() {
+    private lateinit var navTabs: View
+    private lateinit var mediaBarCoordinator: View
+    private lateinit var sheetBar: View
+    private lateinit var sheetContent: View
+    private lateinit var sheetTabs: View
+    private lateinit var sheetPager: ViewPager2
     private lateinit var sheet: BottomSheetBehavior<*>
     private lateinit var track: TextView
     private lateinit var artist: TextView
@@ -42,7 +45,8 @@ class PagerFragment : Fragment() {
             isUserInputEnabled = false
             adapter = PagerAdapter.Content(this@PagerFragment)
         }
-        val navTabs = binding.navTabs
+
+        val navTabs = binding.navTabs.also { navTabs = it }
         TabLayoutMediator(navTabs, contentPager) { tab, position ->
             tab.setIcon(when(position) {
                 CONTENT_HOME -> R.drawable.ic_home
@@ -53,12 +57,12 @@ class PagerFragment : Fragment() {
             })
         }.attach()
 
-        val sheetPager = binding.sheetPager.apply {
+        val sheetTabs = binding.sheetTabs.also { sheetTabs = it }
+        sheetPager = binding.sheetPager.apply {
             isUserInputEnabled = false
             adapter = PagerAdapter.Sheet(this@PagerFragment)
         }
         sheetPager.currentItem = SHEET_NOW_PLAYING
-        val sheetTabs = binding.sheetTabs
         TabLayoutMediator(sheetTabs, sheetPager) { tab, position ->
             tab.text = getString(when(position) {
                 SHEET_QUEUE -> R.string.queue
@@ -70,11 +74,11 @@ class PagerFragment : Fragment() {
 
         val player = (context.applicationContext as App).player
 
+        mediaBarCoordinator = binding.mediaBarCoordinator
+        sheetBar = binding.sheetBar
+        sheetContent = binding.sheetContent
         sheet = BottomSheetBehavior.from(binding.mediaSheet)
         sheet.state = BottomSheetBehavior.STATE_HIDDEN
-        binding.sheetBar.post {
-            sheet.peekHeight = binding.sheetBar.height
-        }
         sheet.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(sheet: View, state: Int) {
                 if (state == BottomSheetBehavior.STATE_HIDDEN) {
@@ -131,33 +135,38 @@ class PagerFragment : Fragment() {
             position.progress = pos.toInt()
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(navTabs) { view, insets ->
-            view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                bottomMargin = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
-            }
-            WindowInsetsCompat.CONSUMED
-        }
-        ViewCompat.setOnApplyWindowInsetsListener(binding.sheetContent) { _, insets ->
-            // updates the height to match the screen...
-            // ... - nav - status bars
-            // ... - nav tabs
-            // ... - sheet tabs
-            // for this to work, the height must NOT be wrap_content!!!
-            // AND the peek height must NOT be defined manually!!!
-            binding.sheetPager.updateLayoutParams {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    val metrics = requireActivity().windowManager.currentWindowMetrics
-                    val insetVals = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-                    height = metrics.bounds.height() - insetVals.bottom - insetVals.top - navTabs.height - sheetTabs.height
-                } // todo
-            }
-            sheetTabs.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                val insetVals = insets.getInsets(WindowInsetsCompat.Type.statusBars())
-                topMargin = insetVals.top
-            }
-            WindowInsetsCompat.CONSUMED
-        }
-
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val context = requireContext()
+
+        val window = requireActivity().window
+        // we don't use the window inset listener here because it will make us return 0 for view
+        // heights, since they haven't been laid out yet
+        sheetContent.post {
+            val insets = window.decorView.rootWindowInsets
+            val inset = WindowInsetsCompat.toWindowInsetsCompat(insets).getInsets(WindowInsetsCompat.Type.systemBars())
+
+            // this is really complicated don't mess with it
+            mediaBarCoordinator.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                height = view.height - navTabs.height + sheetBar.height
+                bottomMargin = sheetBar.height
+            }
+
+            sheetTabs.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = inset.top
+            }
+
+            sheet.peekHeight = sheetBar.height
+
+            // updates the height to match the screen
+            sheetPager.updateLayoutParams {
+                height = view.height - inset.top - navTabs.height - sheetTabs.height
+                Log.d(TAG,
+                    "Insets changed { view=${view.height} top=${inset.top} bottom=${inset.bottom} navTabs=${navTabs.height} sheetTabs=${sheetTabs.height} } = $height")
+            }
+        }
     }
 }

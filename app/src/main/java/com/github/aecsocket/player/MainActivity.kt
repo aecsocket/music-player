@@ -3,6 +3,7 @@ package com.github.aecsocket.player
 import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.*
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
@@ -18,10 +19,12 @@ class MainActivity : AppCompatActivity() {
         volumeControlStream = AudioManager.STREAM_MUSIC
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(R.id.view)) { view, insets ->
-            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                    marginEnd = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).right
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.view)) { view, insets ->
+            view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                val inset = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+                bottomMargin = inset.bottom
+                if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    rightMargin = inset.right
                 }
             }
             insets

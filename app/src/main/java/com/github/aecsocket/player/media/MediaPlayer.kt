@@ -120,9 +120,10 @@ class MediaPlayer(
                         if (current.value?.type?.isLive() == true) {
                             handle.exo.prepare()
                             handle.exo.play()
+                        } else {
+                            skipNext()
                         }
                     }
-                    //Player.STATE_ENDED -> state.postValue(STATE_PAUSED) // TODO next here, but it should be handled by other things
                 }
             }
 

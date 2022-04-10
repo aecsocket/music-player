@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import androidx.core.view.MarginLayoutParamsCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
@@ -36,7 +37,8 @@ class SearchFragment : Fragment() {
         val binding = FragmentSearchBinding.inflate(inflater, container, false)
         val context = context ?: return binding.root
         val player = (context.applicationContext as App).player
-        binding.searchItems.adapter = adapter
+        val searchItems = binding.searchItems
+        searchItems.adapter = adapter
 
         shimmer = binding.searchItemsShimmer
         stopShimmer()
@@ -44,6 +46,7 @@ class SearchFragment : Fragment() {
             if (state != null) {
                 stopShimmer()
             }
+            println("Submitted new state")
             adapter.submitList(state)
         }
         // TODO observe queue changes here
@@ -86,16 +89,16 @@ class SearchFragment : Fragment() {
             }
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.searchBarContainer) { view, windowInsets ->
-            view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                topMargin = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+        ViewCompat.setOnApplyWindowInsetsListener(binding.search) { _, insets ->
+            val inset = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            binding.searchBarContainer.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = inset.top
             }
-            WindowInsetsCompat.CONSUMED
-        }
-        ViewCompat.setOnApplyWindowInsetsListener(binding.searchItems) { view, windowInsets ->
-            val padding = binding.searchBarContainer.height + windowInsets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+
+            val padding = binding.searchBarContainer.height + inset.top
             shimmer.setPadding(shimmer.paddingLeft, padding, shimmer.paddingRight, shimmer.paddingBottom)
-            view.setPadding(view.paddingLeft, padding, view.paddingRight, view.paddingBottom)
+            searchItems.setPadding(searchItems.paddingLeft, padding, searchItems.paddingRight, searchItems.paddingBottom)
+
             WindowInsetsCompat.CONSUMED
         }
 
