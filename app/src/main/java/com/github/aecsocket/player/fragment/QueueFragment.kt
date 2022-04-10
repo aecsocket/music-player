@@ -11,7 +11,7 @@ import com.github.aecsocket.player.App
 import com.github.aecsocket.player.databinding.FragmentQueueBinding
 
 class QueueFragment : Fragment() {
-    private val adapter = QueueItemAdapter()
+    private lateinit var adapter: QueueItemAdapter
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val binding = FragmentQueueBinding.inflate(inflater, container, false)
@@ -19,7 +19,27 @@ class QueueFragment : Fragment() {
         val player = (context.applicationContext as App).player
 
         val items = binding.queueItems
+        val touchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+            ItemTouchHelper.UP or ItemTouchHelper.DOWN,
+            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+        ) {
+            override fun onMove(
+                view: RecyclerView,
+                from: RecyclerView.ViewHolder,
+                to: RecyclerView.ViewHolder
+            ): Boolean {
+                player.queue.move(from.layoutPosition, to.layoutPosition)
+                return true
+            }
+
+            override fun onSwiped(holder: RecyclerView.ViewHolder, direction: Int) {
+                val position = holder.layoutPosition
+                player.queue.remove(position)
+            }
+        })
+        adapter = QueueItemAdapter(touchHelper = touchHelper)
         items.adapter = adapter
+        touchHelper.attachToRecyclerView(items)
         player.queue.getState().observe(viewLifecycleOwner) {
             adapter.submitState(it)
             val childCount = items.childCount
@@ -29,21 +49,6 @@ class QueueFragment : Fragment() {
                 holder.updateSelected(it.index)
             }
         }
-
-        ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
-            ItemTouchHelper.UP or ItemTouchHelper.DOWN,
-            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
-        ) {
-            override fun onMove(view: RecyclerView, from: RecyclerView.ViewHolder, to: RecyclerView.ViewHolder): Boolean {
-                player.queue.move(from.layoutPosition, to.layoutPosition)
-                return true
-            }
-
-            override fun onSwiped(holder: RecyclerView.ViewHolder, direction: Int) {
-                val position = holder.layoutPosition
-                player.queue.remove(position)
-            }
-        }).attachToRecyclerView(binding.queueItems)
 
         binding.queueClearAll.setOnClickListener {
             player.queue.clear()

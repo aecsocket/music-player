@@ -131,6 +131,10 @@ class MediaPlayer(
                 if (playWhenReady) {
                     requestAudioFocus()
                     state.postValue(STATE_PLAYING)
+                    if (current.value?.type?.isLive() == true) {
+                        // catch up to the end
+                        handle.exo.seekToDefaultPosition()
+                    }
                 } else {
                     abandonAudioFocus()
                     state.postValue(STATE_PAUSED)

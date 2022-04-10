@@ -5,5 +5,5 @@
     <dimen name="text_size_subheading">18sp</dimen>
     <dimen name="item_list_height">56dp</dimen>
     <dimen name="sheet_bar_height">64dp</dimen>
-    <dimen name="time_bar_height">40dp</dimen>
+    <dimen name="time_bar_height">32dp</dimen>
 </resources>
