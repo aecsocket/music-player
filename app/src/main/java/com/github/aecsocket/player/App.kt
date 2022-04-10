@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit
 const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101 Firefox/78.0"
 const val PKG = BuildConfig.APPLICATION_ID
 const val NOTIF_CHAN_MEDIA = "media"
+const val NOTIF_CHAN_ERROR = "error"
 const val TAG = "MPlayer"
 
 class App : Application() {
@@ -76,11 +77,19 @@ class App : Application() {
                     .build()
             )
         }
+        NotificationManagerCompat.from(this).apply {
+            createNotificationChannel(
+                NotificationChannelCompat.Builder(NOTIF_CHAN_ERROR, NotificationManagerCompat.IMPORTANCE_LOW)
+                    .setName(getString(R.string.notif_error))
+                    .setDescription(getString(R.string.notif_error_desc))
+                    .build()
+            )
+        }
     }
 
     companion object {
-        fun setupRequest(req: RequestCreator): RequestCreator =
-            req.placeholder(R.drawable.placeholder)
+        // if we ever need to add anything else here
+        fun setupRequest(req: RequestCreator) = req
     }
 }
 

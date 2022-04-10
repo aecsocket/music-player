@@ -98,8 +98,16 @@ class StreamQueue {
     fun remove(index: Int) {
         post { State(
             it.items.toMutableList().apply { removeAt(index) },
-            if (it.index > index || index == it.items.size - 1) index - 1 else it.index
+            if (
+                it.index > index // if it is at or above the item we just removed
+                || it.index == it.items.size - 1 // if it is the last item
+            ) it.index - 1
+            else it.index
         ) }
+    }
+
+    fun remove(element: StreamData) {
+        indexOf(element)?.let { remove(it) }
     }
 
     fun move(from: Int, to: Int) {

@@ -25,8 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="?attr/bg_alt"
-            android:scaleType="centerCrop"
-            app:srcCompat="@drawable/placeholder" />
+            android:scaleType="centerCrop" />
     </androidx.cardview.widget.CardView>
 
     <TextView

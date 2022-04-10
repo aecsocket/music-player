@@ -39,8 +39,9 @@ class GenericItemAdapter : ListAdapter<DataItem, GenericItemAdapter.BaseHolder>(
             val context = itemView.context
             primary.text = item.getPrimaryText(context)
             secondary.text = item.getSecondaryText(context)
-            item.getArt(context)?.placeholder(R.drawable.placeholder)?.into(art)
+            item.getArt(context)?.into(art)
 
+            // TODO bottom sheet here
             base.setOnLongClickListener {
                 Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
@@ -58,31 +59,40 @@ class GenericItemAdapter : ListAdapter<DataItem, GenericItemAdapter.BaseHolder>(
     }
 
     class StreamHolder(view: View) : QueuerHolder(view) {
+        private var stream: StreamData? = null
+
         override fun bindTo(item: DataItem) {
             super.bindTo(item)
-            val stream = item as StreamData
-            println("Created")
+            val stream = (item as StreamData).also { stream = it }
 
             // TODO live update this depending on queue change.
             // will have to be done in the search view
-            if (player.queue.indexOf(stream) == null) {
-                addToQueue.setImageResource(R.drawable.ic_list_add)
-                base.setOnClickListener {
-                    player.queue.addOrSelect(stream)
-                    player.play()
-                    added()
-                }
-                addToQueue.setOnClickListener {
-                    player.queue.add(stream)
-                    added()
-                }
-            } else {
-                addToQueue.setImageResource(R.drawable.ic_check)
+            setQueued(player.queue.indexOf(stream) != null)
+            base.setOnClickListener {
+                player.queue.addOrSelect(stream)
+                player.play()
+                // todo just have the queue observer handle this
+                setQueued(true)
             }
         }
 
-        private fun added() {
-            addToQueue.setImageResource(R.drawable.ic_check)
+        fun setQueued(queued: Boolean) {
+            stream?.let { stream ->
+                if (queued) {
+                    addToQueue.setImageResource(R.drawable.ic_check)
+                    addToQueue.setOnClickListener {
+                        player.queue.remove(stream)
+                        // todo just have the queue observer handle this
+                        setQueued(false)
+                    }
+                } else {
+                    addToQueue.setImageResource(R.drawable.ic_list_add)
+                    addToQueue.setOnClickListener {
+                        player.queue.add(stream)
+                        setQueued(true)
+                    }
+                }
+            }
         }
 
         companion object {

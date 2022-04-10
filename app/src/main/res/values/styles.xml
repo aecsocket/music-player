@@ -8,6 +8,7 @@
     </style>
 
     <style name="Base.Light" parent="Base.Parent">
+        <item name="accent_alt">@color/accent_alt_light</item>
         <item name="bg">@color/bg_light</item>
         <item name="bg_alt">@color/bg_alt_light</item>
         <item name="fg">@color/fg_light</item>
@@ -19,6 +20,7 @@
     </style>
 
     <style name="Base.Dark" parent="Base.Parent">
+        <item name="accent_alt">@color/accent_alt_dark</item>
         <item name="bg">@color/bg_dark</item>
         <item name="bg_alt">@color/bg_alt_dark</item>
         <item name="fg">@color/fg_dark</item>

@@ -3,6 +3,8 @@
     <string name="app_name" translatable="false">MPlayer</string>
     <string name="notif_media">Media</string>
     <string name="notif_media_desc">Notification for media playback control</string>
+    <string name="notif_error">Error</string>
+    <string name="notif_error_desc">Notification for error reports</string>
     <string name="search">Search</string>
     <string name="search_hint">Search tracks, artists, albums</string>
     <string name="stop">Stop</string>
@@ -39,6 +41,8 @@
     <string name="error_content_not_supported">This content is not supported.</string>
     <string name="error_generic">An error occurred.</string>
     <string name="error_network">A network error occurred.</string>
+    <string name="error_notif">An error occurred, tap to see details</string>
+    <string name="no_message">(no message)</string>
     <string name="unknown_time">--:--</string>
     <string name="queue">Queue</string>
     <string name="now_playing">Now Playing</string>
@@ -53,4 +57,7 @@
     <string name="queue_clear">Clear queue</string>
     <string name="queue_jump">Jump to current item</string>
     <string name="open_with">Open with</string>
+    <string name="error_header">An error occurred.</string>
+    <string name="error_message">Error message:</string>
+    <string name="error_stack_trace">Stack trace:</string>
 </resources>

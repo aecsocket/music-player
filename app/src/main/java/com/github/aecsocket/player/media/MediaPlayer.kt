@@ -15,20 +15,13 @@ import androidx.media.AudioAttributesCompat.USAGE_MEDIA
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.github.aecsocket.player.*
-import com.github.aecsocket.player.data.DataItem
 import com.github.aecsocket.player.data.StreamData
-import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.schabi.newpipe.extractor.StreamingService
-import org.schabi.newpipe.extractor.stream.StreamType
 import kotlin.math.max
 import kotlin.math.min
 
@@ -37,6 +30,8 @@ const val PROGRESS_UPDATE_INTERVAL = 10L
 const val STATE_PAUSED = 0
 const val STATE_PLAYING = 1
 const val STATE_BUFFERING = 2
+const val DURATION_UNKNOWN = -1L
+const val DURATION_LIVE = -2L
 
 class MediaPlayer(
     private val context: Context
@@ -63,7 +58,7 @@ class MediaPlayer(
     private val current = MutableLiveData<StreamData>()
     private val position = MutableLiveData<Long>().apply { postValue(0) }
     private val buffered = MutableLiveData<Long>().apply { postValue(0) }
-    private val duration = MutableLiveData<Long>().apply { postValue(C.TIME_UNSET) }
+    private val duration = MutableLiveData<Long>().apply { postValue(DURATION_UNKNOWN) }
     val repeatMode = MutableLiveData<Int>().apply {
         postValue(Player.REPEAT_MODE_OFF)
         observeForever { handle?.exo?.repeatMode = it }
@@ -114,7 +109,6 @@ class MediaPlayer(
                 if (playWhenReady) STATE_PLAYING else STATE_PAUSED
 
             override fun onPlaybackStateChanged(playbackState: Int) {
-                println("change state to $playbackState")
                 when (playbackState) {
                     Player.STATE_IDLE, Player.STATE_BUFFERING -> state.postValue(STATE_BUFFERING)
                     Player.STATE_READY -> {
@@ -177,9 +171,11 @@ class MediaPlayer(
         }
     }
 
-    private fun postDuration(duration: Long) {
-        if (current.value?.type?.isLive() == false) {
-            this.duration.postValue(duration)
+    private fun postDuration(dur: Long) {
+        if (current.value?.type?.isLive() == true) {
+            duration.postValue(DURATION_LIVE)
+        } else {
+            duration.postValue(dur)
         }
     }
 
@@ -213,8 +209,10 @@ class MediaPlayer(
                 // we post a value before anything else, so our service can get the current track
                 // before we create it, and avoiding an illegal state
                 this.current.postValue(stream)
+                duration.postValue(DURATION_UNKNOWN)
                 state.postValue(STATE_BUFFERING)
                 val handle = requirePlayer()
+                handle.exo.clearMediaItems()
                 scope.launch(Dispatchers.IO) {
                     val source = resolver.resolve(stream.request())
                     withContext(Dispatchers.Main) {

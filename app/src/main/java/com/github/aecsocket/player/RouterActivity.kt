@@ -8,8 +8,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.github.aecsocket.player.data.DataItem
+import com.github.aecsocket.player.error.ErrorHandler
+import com.github.aecsocket.player.error.ErrorInfo
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.NewPipe
@@ -40,7 +41,8 @@ class RouterActivity : AppCompatActivity() {
         } else {
             lifecycleScope.launch(Dispatchers.IO + CoroutineExceptionHandler { _, ex ->
                 lifecycleScope.launch(Dispatchers.Main) {
-                    ExceptionHandler.handle(findViewById<View>(android.R.id.content).rootView, ex)
+                    val context = this@RouterActivity
+                    ErrorHandler.handle(context, ErrorInfo(ErrorHandler.getMessage(context, ex), ex))
                 }
             }) {
                 DataItem.requestStreams(url, this)?.let { streams ->

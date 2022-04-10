@@ -15,8 +15,7 @@
         android:layout_weight="1"
         android:adjustViewBounds="true"
         android:contentDescription="@string/album"
-        android:scaleType="fitCenter"
-        app:srcCompat="@drawable/placeholder" />
+        android:scaleType="fitCenter" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout"
@@ -157,7 +156,7 @@
                     android:progressBackgroundTint="?attr/bg_alt"
                     android:progressTint="?attr/fg"
                     android:secondaryProgressTint="?attr/fg"
-                    android:thumbTint="@color/accent"
+                    android:thumbTint="?attr/fg"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/nowPlayingDuration"
                     app:layout_constraintHorizontal_bias="0.0"

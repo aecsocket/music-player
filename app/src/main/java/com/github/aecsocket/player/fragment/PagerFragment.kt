@@ -1,35 +1,38 @@
 package com.github.aecsocket.player.fragment
 
-import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.BlendModeColorFilter
+import android.graphics.PorterDuff
 import android.os.Build
 import android.os.Bundle
-import android.util.DisplayMetrics
-import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.graphics.BlendModeColorFilterCompat
+import androidx.core.graphics.BlendModeCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import com.github.aecsocket.player.*
 import com.github.aecsocket.player.databinding.FragmentPagerBinding
+import com.github.aecsocket.player.media.DURATION_LIVE
+import com.github.aecsocket.player.media.DURATION_UNKNOWN
+import com.google.android.exoplayer2.C
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.tabs.TabLayoutMediator
 import java.lang.IndexOutOfBoundsException
-import kotlin.math.ceil
 
 class PagerFragment : Fragment() {
-    private lateinit var vSheet: BottomSheetBehavior<*>
-    private lateinit var vTrack: TextView
-    private lateinit var vArtist: TextView
-    private lateinit var vArt: ImageView
-    private lateinit var vPlayPause: ImageButton
+    private lateinit var sheet: BottomSheetBehavior<*>
+    private lateinit var track: TextView
+    private lateinit var artist: TextView
+    private lateinit var art: ImageView
+    private lateinit var playPause: ImageButton
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val binding = FragmentPagerBinding.inflate(inflater, container, false)
@@ -67,12 +70,12 @@ class PagerFragment : Fragment() {
 
         val player = (context.applicationContext as App).player
 
-        vSheet = BottomSheetBehavior.from(binding.mediaSheet)
-        vSheet.state = BottomSheetBehavior.STATE_HIDDEN
+        sheet = BottomSheetBehavior.from(binding.mediaSheet)
+        sheet.state = BottomSheetBehavior.STATE_HIDDEN
         binding.sheetBar.post {
-            vSheet.peekHeight = binding.sheetBar.height
+            sheet.peekHeight = binding.sheetBar.height
         }
-        vSheet.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+        sheet.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(sheet: View, state: Int) {
                 if (state == BottomSheetBehavior.STATE_HIDDEN) {
                     context.sendBroadcast(Intent(ACTION_STOP))
@@ -83,19 +86,50 @@ class PagerFragment : Fragment() {
         })
         player.queue.getCurrent().observe(viewLifecycleOwner) { stream ->
             if (stream == null) {
-                vSheet.state = BottomSheetBehavior.STATE_HIDDEN
-            } else if (vSheet.state == BottomSheetBehavior.STATE_HIDDEN) {
-                vSheet.state = BottomSheetBehavior.STATE_COLLAPSED
+                sheet.state = BottomSheetBehavior.STATE_HIDDEN
+            } else if (sheet.state == BottomSheetBehavior.STATE_HIDDEN) {
+                sheet.state = BottomSheetBehavior.STATE_COLLAPSED
             }
         }
 
-        vTrack = binding.mediaTrack
-        vArtist = binding.mediaArtist
-        vArt = binding.mediaArt
-        vPlayPause = binding.mediaPlayPause
+        track = binding.mediaTrack
+        artist = binding.mediaArtist
+        art = binding.mediaArt
+        playPause = binding.mediaPlayPause
 
         NowPlayingFragment.setupBasicBindings(context, player, viewLifecycleOwner,
-            vTrack, vArtist, vArt, vPlayPause, binding.mediaSkipNext)
+            track, artist, art, playPause, binding.mediaSkipNext)
+
+        val position = binding.mediaPosition
+        val liveBar = binding.mediaLive
+        player.getDuration().observe(viewLifecycleOwner) { duration ->
+            fun showDeterminate() {
+                liveBar.visibility = View.INVISIBLE
+                position.visibility = View.VISIBLE
+            }
+
+            fun showLive() {
+                liveBar.visibility = View.VISIBLE
+                position.visibility = View.INVISIBLE
+            }
+
+            when (duration) {
+                DURATION_UNKNOWN -> {
+                    showDeterminate()
+                    position.max = 1
+                }
+                DURATION_LIVE -> {
+                    showLive()
+                }
+                else -> {
+                    showDeterminate()
+                    position.max = duration.toInt()
+                }
+            }
+        }
+        player.getPosition().observe(viewLifecycleOwner) { pos ->
+            position.progress = pos.toInt()
+        }
 
         ViewCompat.setOnApplyWindowInsetsListener(navTabs) { view, insets ->
             view.updateLayoutParams<ViewGroup.MarginLayoutParams> {

@@ -40,6 +40,34 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
+                <FrameLayout
+                    android:id="@+id/mediaPositionContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent">
+
+                    <ProgressBar
+                        android:id="@+id/mediaPosition"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:indeterminate="false"
+                        android:progressBackgroundTint="?attr/bg_alt"
+                        android:progressTint="?attr/fg"
+                        android:scaleY="10" />
+
+                    <FrameLayout
+                        android:id="@+id/mediaLive"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/live">
+
+                    </FrameLayout>
+                </FrameLayout>
+
                 <androidx.cardview.widget.CardView
                     android:id="@+id/mediaArtContainer"
                     android:layout_width="0dp"
@@ -48,7 +76,7 @@
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="6dp"
                     app:cardCornerRadius="3dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintBottom_toTopOf="@+id/mediaPositionContainer"
                     app:layout_constraintDimensionRatio="H,1:1"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
@@ -59,8 +87,7 @@
                         android:layout_height="match_parent"
                         android:adjustViewBounds="true"
                         android:contentDescription="@string/album"
-                        android:scaleType="centerCrop"
-                        app:srcCompat="@drawable/placeholder" />
+                        android:scaleType="centerCrop" />
                 </androidx.cardview.widget.CardView>
 
                 <TextView
@@ -87,17 +114,15 @@
                     android:id="@+id/mediaArtist"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginEnd="8dp"
                     android:ellipsize="marquee"
                     android:gravity="top"
                     android:singleLine="true"
                     android:text="@string/artist"
                     android:textColor="?attr/fg_alt"
                     android:textSize="@dimen/text_size"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/mediaPlayPause"
-                    app:layout_constraintStart_toEndOf="@+id/mediaArtContainer"
+                    app:layout_constraintBottom_toTopOf="@+id/mediaPositionContainer"
+                    app:layout_constraintEnd_toEndOf="@+id/mediaTrack"
+                    app:layout_constraintStart_toStartOf="@+id/mediaTrack"
                     app:layout_constraintTop_toBottomOf="@+id/mediaTrack" />
 
                 <ImageButton
@@ -109,7 +134,7 @@
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp"
                     android:scaleType="fitCenter"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintBottom_toTopOf="@+id/mediaPositionContainer"
                     app:layout_constraintEnd_toStartOf="@+id/mediaSkipNext"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintVertical_bias="0.0"
@@ -125,9 +150,9 @@
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp"
                     android:scaleType="fitCenter"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintBottom_toBottomOf="@+id/mediaPlayPause"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/mediaPlayPause"
                     app:layout_constraintVertical_bias="0.0"
                     app:srcCompat="@drawable/ic_skip_next"
                     app:tint="?attr/fg" />
@@ -138,6 +163,7 @@
                 android:id="@+id/sheetContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="?attr/bg"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/sheetBar">
@@ -146,7 +172,6 @@
                     android:id="@+id/sheetTabs"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:background="?attr/bg"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -159,7 +184,6 @@
                     android:id="@+id/sheetPager"
                     android:layout_width="0dp"
                     android:layout_height="500dp"
-                    android:background="?attr/bg"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toStartOf="parent"

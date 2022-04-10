@@ -4,7 +4,7 @@
     android:id="@+id/item"
     android:layout_width="match_parent"
     android:layout_height="@dimen/item_list_height"
-    android:background="@drawable/ripple_bounded"
+    android:background="?attr/bg"
     android:clickable="true"
     android:focusable="true">
 
@@ -25,8 +25,7 @@
             android:layout_height="match_parent"
             android:background="?attr/bg_alt"
             android:contentDescription="@string/art"
-            android:scaleType="centerCrop"
-            app:srcCompat="@drawable/placeholder" />
+            android:scaleType="centerCrop" />
     </androidx.cardview.widget.CardView>
 
     <TextView
@@ -68,9 +67,9 @@
         android:contentDescription="@string/drag_to_move"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
-        app:tint="?attr/fg"
         app:layout_constraintBottom_toBottomOf="@+id/itemSecondary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/itemPrimary"
-        app:srcCompat="@drawable/ic_drag_handle" />
+        app:srcCompat="@drawable/ic_drag_handle"
+        app:tint="?attr/fg" />
 </androidx.constraintlayout.widget.ConstraintLayout>

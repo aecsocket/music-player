@@ -21,14 +21,12 @@ class QueueFragment : Fragment() {
         val items = binding.queueItems
         items.adapter = adapter
         player.queue.getState().observe(viewLifecycleOwner) {
-            println("IDX ${adapter.index} TO ${it.index}")
             adapter.submitState(it)
             val childCount = items.childCount
             for (i in 0..childCount) {
                 val child = items.getChildAt(i) ?: continue
                 val holder = items.getChildViewHolder(child) as QueueItemAdapter.ViewHolder
                 holder.updateSelected(it.index)
-                println(">> updated one")
             }
         }
 

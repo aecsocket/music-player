@@ -106,4 +106,4 @@ class SourceResolver(
 }
 
 fun StreamType.isLive() =
-    this == StreamType.AUDIO_STREAM || this == StreamType.AUDIO_LIVE_STREAM
+    this == StreamType.LIVE_STREAM || this == StreamType.AUDIO_LIVE_STREAM

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <attr name="accent" format="color" />
+    <attr name="accent_alt" format="color" />
     <attr name="bg" format="color" />
     <attr name="bg_alt" format="color" />
     <attr name="fg" format="color" />

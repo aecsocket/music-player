@@ -10,12 +10,16 @@
         android:id="@+id/queueItems"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="64dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:listitem="@layout/item_skeleton">
+        app:layout_constraintVertical_bias="0.0"
+        tools:listitem="@layout/item_queue">
 
     </androidx.recyclerview.widget.RecyclerView>
 
@@ -23,28 +27,28 @@
         android:id="@+id/queueClearAll"
         android:layout_width="48dp"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:background="@drawable/bg_capsule"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_alt_capsule"
         android:contentDescription="@string/queue_clear"
         android:elevation="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="H,1:1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_clear" />
 
     <ImageButton
         android:id="@+id/queueJump"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/bg_capsule"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/bg_alt_capsule"
         android:contentDescription="@string/queue_jump"
         android:elevation="10dp"
+        app:layout_constraintBottom_toBottomOf="@+id/queueClearAll"
         app:layout_constraintDimensionRatio="H,1:1"
-        app:layout_constraintEnd_toEndOf="@+id/queueClearAll"
-        app:layout_constraintStart_toStartOf="@+id/queueClearAll"
-        app:layout_constraintTop_toBottomOf="@+id/queueClearAll"
+        app:layout_constraintEnd_toStartOf="@+id/queueClearAll"
+        app:layout_constraintTop_toTopOf="@+id/queueClearAll"
         app:srcCompat="@drawable/ic_location" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -35,7 +35,7 @@ class QueueItemAdapter(var index: Int = -1) : ListAdapter<StreamData, QueueItemA
             val context = itemView.context
             primary.text = item.getPrimaryText(context)
             secondary.text = item.getSecondaryText(context)
-            item.getArt(context)?.placeholder(R.drawable.placeholder)?.into(art)
+            item.getArt(context)?.into(art)
 
             /* TODO drag handle dragHandle.setOnTouchListener { view, _ ->
                 view.performClick()
@@ -49,7 +49,7 @@ class QueueItemAdapter(var index: Int = -1) : ListAdapter<StreamData, QueueItemA
             val context = itemView.context
             if (selected == layoutPosition) {
                 // currently playing
-                context.theme.resolve(R.attr.accent)?.let { accent ->
+                context.theme.resolve(R.attr.accent_alt)?.let { accent ->
                     listOf(primary, secondary).forEach { it.setTextColor(accent) }
                 }
                 base.setOnClickListener(null)

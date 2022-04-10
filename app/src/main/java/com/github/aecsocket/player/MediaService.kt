@@ -100,6 +100,7 @@ class MediaService : LifecycleService() {
             .setTicker(stream.name)
             .setContentText(stream.artist ?: getString(R.string.unknown_artist))
             .setLargeIcon(art)
+            .setContentIntent(PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), flags))
             .addAction(R.drawable.ic_skip_previous, getString(R.string.skip_previous),
                 PendingIntent.getBroadcast(this, 0, Intent(ACTION_SKIP_PREVIOUS), flags))
         when (player.getState().value) {

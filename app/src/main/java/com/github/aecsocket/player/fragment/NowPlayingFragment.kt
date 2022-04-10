@@ -6,30 +6,25 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.SeekBar
-import android.widget.TextView
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import com.github.aecsocket.player.*
 import com.github.aecsocket.player.databinding.FragmentNowPlayingBinding
 import com.github.aecsocket.player.media.*
-import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.Player
-import org.schabi.newpipe.extractor.stream.StreamType
 import java.util.*
 
 class NowPlayingFragment : Fragment() {
-    private lateinit var vTrack: TextView
-    private lateinit var vArtist: TextView
-    private lateinit var vArt: ImageView
-    private lateinit var vPlayPause: ImageButton
-    private lateinit var vShuffle: ImageButton
-    private lateinit var vRepeat: ImageButton
-    private lateinit var vSeek: SeekBar
-    private lateinit var vPosition: TextView
-    private lateinit var vDuration: TextView
+    private lateinit var track: TextView
+    private lateinit var artist: TextView
+    private lateinit var art: ImageView
+    private lateinit var playPause: ImageButton
+    private lateinit var shuffle: ImageButton
+    private lateinit var repeat: ImageButton
+    private lateinit var seek: SeekBar
+    private lateinit var position: TextView
+    private lateinit var duration: TextView
     private var seekDragging = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -37,26 +32,26 @@ class NowPlayingFragment : Fragment() {
         val context = context ?: return binding.root
         val player = (context.applicationContext as App).player
 
-        vTrack = binding.nowPlayingTrack
-        vArtist = binding.nowPlayingArtist
-        vArt = binding.nowPlayingArt
-        vPlayPause = binding.nowPlayingPlayPause
-        vShuffle = binding.nowPlayingShuffle
-        vRepeat = binding.nowPlayingRepeat
-        vSeek = binding.nowPlayingSeek
-        vPosition = binding.nowPlayingPosition
-        vDuration = binding.nowPlayingDuration
+        track = binding.nowPlayingTrack
+        artist = binding.nowPlayingArtist
+        art = binding.nowPlayingArt
+        playPause = binding.nowPlayingPlayPause
+        shuffle = binding.nowPlayingShuffle
+        repeat = binding.nowPlayingRepeat
+        seek = binding.nowPlayingSeek
+        position = binding.nowPlayingPosition
+        duration = binding.nowPlayingDuration
 
         setupBasicBindings(context, player, viewLifecycleOwner,
-            vTrack, vArtist, vArt, vPlayPause, binding.nowPlayingSkipNext)
+            track, artist, art, playPause, binding.nowPlayingSkipNext)
 
         binding.nowPlayingSkipPrevious.setOnClickListener { context.sendBroadcast(Intent(ACTION_SKIP_PREVIOUS)) }
 
-        vSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(view: SeekBar, progress: Int, fromUser: Boolean) {
                 if (!fromUser)
                     return
-                vPosition.text = formatTime(progress.toLong())
+                position.text = formatTime(progress.toLong())
             }
 
             override fun onStartTrackingTouch(view: SeekBar) {
@@ -86,35 +81,34 @@ class NowPlayingFragment : Fragment() {
         }
 
         player.getCurrent().observe(viewLifecycleOwner) { stream ->
-            when (stream.type) {
-                StreamType.LIVE_STREAM, StreamType.AUDIO_LIVE_STREAM -> {
-                    binding.nowPlayingTimeDeterminate?.visibility = View.INVISIBLE
-                    binding.nowPlayingLive?.visibility = View.VISIBLE
-                }
-                else -> {
-                    binding.nowPlayingTimeDeterminate?.visibility = View.VISIBLE
-                    binding.nowPlayingLive?.visibility = View.INVISIBLE
-                }
+            if (stream.type.isLive()) {
+                binding.nowPlayingTimeDeterminate?.visibility = View.INVISIBLE
+                binding.nowPlayingLive?.visibility = View.VISIBLE
+            } else {
+                binding.nowPlayingTimeDeterminate?.visibility = View.VISIBLE
+                binding.nowPlayingLive?.visibility = View.INVISIBLE
             }
         }
 
         player.getPosition().observe(viewLifecycleOwner) { position ->
             if (!seekDragging) {
-                vSeek.progress = position.toInt()
-                vPosition.text = formatTime(position)
+                seek.progress = position.toInt()
+                this.position.text = formatTime(position)
             }
         }
         player.getBuffered().observe(viewLifecycleOwner) { buffered ->
-            vSeek.secondaryProgress = buffered.toInt()
+            seek.secondaryProgress = buffered.toInt()
         }
         player.getDuration().observe(viewLifecycleOwner) { duration ->
-            if (duration == C.TIME_UNSET) {
-                vSeek.max = 1
-                //vDuration.text = getString(R.string.unknown_time)
-            } else {
-                vSeek.max = duration.toInt()
-                vSeek.keyProgressIncrement = 10_000
-                vDuration.text = formatTime(duration)
+            if (duration == DURATION_UNKNOWN) {
+                seek.max = 1
+                seek.progress = 0
+                seek.secondaryProgress = 0
+                this.duration.text = getString(R.string.unknown_time)
+            } else if (duration >= 0) {
+                seek.max = duration.toInt()
+                seek.keyProgressIncrement = 10_000
+                this.duration.text = formatTime(duration)
             }
         }
 

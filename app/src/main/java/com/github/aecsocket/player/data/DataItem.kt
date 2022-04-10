@@ -41,20 +41,27 @@ sealed class DataItem(
             return when (service.getLinkTypeByUrl(url)) {
                 StreamingService.LinkType.STREAM -> listOf(requestStream(url, service))
                 StreamingService.LinkType.PLAYLIST -> {
-                    var nextUrl: String? = url
+                    var playlist = PlaylistInfo.getInfo(service, url)
+                    // keep it ordered by using an array
+                    val streams = Array<StreamData?>(playlist.streamCount.toInt()) { null }
                     val jobs = ArrayList<Job>()
-                    val streams = ArrayList<StreamData>()
-                    while (nextUrl != null) {
-                        val playlist = PlaylistInfo.getInfo(service, nextUrl)
+                    var idx = 0
+                    while (playlist != null) {
                         playlist.relatedItems.forEach { elem ->
+                            val i = idx
                             jobs.add(scope.launch(Dispatchers.IO) {
-                                streams.add(requestStream(elem.url, service))
+                                streams[i] = requestStream(elem.url, service)
                             })
+                            idx++
                         }
-                        nextUrl = playlist.nextPage?.url
+                        playlist = if (playlist.hasNextPage())
+                            PlaylistInfo.getInfo(playlist.nextPage.url)
+                        else null
                     }
                     jobs.joinAll()
-                    streams
+                    // if we failed to get some entries, they'll stay null - just filter them out
+                    // TODO maybe log these errors
+                    streams.filterNotNull()
                 }
                 else -> null
             }

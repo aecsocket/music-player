@@ -28,7 +28,6 @@ class SearchViewModel : ViewModel() {
         if (item == null)
             return
         results?.let {
-            println("added, cur = $it")
             it.add(item)
             dResults.postValue(results)
         }
@@ -61,14 +60,7 @@ class SearchViewModel : ViewModel() {
                         when (info.infoType) {
                             InfoItem.InfoType.STREAM -> {
                                 scope.launch(dispatcher) {
-                                    val stream = StreamInfo.getInfo(service, info.url)
-                                    println("found a stream: $stream, cur size = ${results?.size}")
-                                    addResult(stream.asData(service))
-                                    /*val results = (results.value ?: emptyList())
-                                    val next = results + StreamInfo.getInfo(service, info.url)
-                                        .asData(service)
-                                    println("NOW: ${results.size} NEXT: ${next.size}")
-                                    this@SearchViewModel.results.postValue(next)*/
+                                    addResult(StreamInfo.getInfo(service, info.url).asData(service))
                                 }
                             }
                             InfoItem.InfoType.PLAYLIST -> {

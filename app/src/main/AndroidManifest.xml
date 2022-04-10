@@ -24,6 +24,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="com.github.aecsocket.player.error.ErrorActivity" />
+
         <service
             android:name="com.github.aecsocket.player.MediaService"
             android:exported="false"
