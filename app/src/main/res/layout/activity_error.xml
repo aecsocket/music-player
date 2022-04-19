@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="?attr/bg">
+    android:layout_height="match_parent">
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -24,50 +23,24 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/errorMessageDesc"
+            android:id="@+id/errorSubheader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/error_message"
+            android:text="@string/error_subheader"
             app:layout_constraintStart_toStartOf="@+id/errorHeader"
             app:layout_constraintTop_toBottomOf="@+id/errorHeader" />
 
-        <TextView
-            android:id="@+id/errorMessage"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/errorParts"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             app:layout_constraintEnd_toEndOf="@+id/errorHeader"
-            app:layout_constraintStart_toStartOf="@+id/errorMessageDesc"
-            app:layout_constraintTop_toBottomOf="@+id/errorMessageDesc" />
-
-        <TextView
-            android:id="@+id/errorStackTraceDesc"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/error_stack_trace"
-            app:layout_constraintStart_toStartOf="@+id/errorMessage"
-            app:layout_constraintTop_toBottomOf="@+id/errorMessage" />
-
-        <HorizontalScrollView
-            android:id="@+id/errorStackTraceContainer"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="24dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="@+id/errorMessage"
-            app:layout_constraintStart_toStartOf="@+id/errorStackTraceDesc"
-            app:layout_constraintTop_toBottomOf="@+id/errorStackTraceDesc">
-
-            <TextView
-                android:id="@+id/errorStackTrace"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:textIsSelectable="true"
-                android:typeface="monospace" />
-        </HorizontalScrollView>
+            app:layout_constraintStart_toStartOf="@+id/errorSubheader"
+            app:layout_constraintTop_toBottomOf="@+id/errorSubheader"
+            tools:listitem="@layout/item_error" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

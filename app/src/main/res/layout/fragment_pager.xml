@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/view"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="?attr/bg">
+    android:layout_height="match_parent">
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
@@ -26,9 +25,9 @@
 
         <LinearLayout
             android:id="@+id/mediaSheet"
+            style="@style/Base.Backing"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="?attr/bg_alt"
             android:elevation="8dp"
             android:orientation="vertical"
             app:behavior_hideable="true"
@@ -58,13 +57,13 @@
                         android:id="@+id/mediaArt"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:background="?attr/bg"
                         android:contentDescription="@string/art"
                         android:scaleType="centerCrop" />
                 </androidx.cardview.widget.CardView>
 
                 <TextView
                     android:id="@+id/mediaTrack"
+                    style="@style/Base.TextView.Primary"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:layout_marginStart="8dp"
@@ -72,7 +71,6 @@
                     android:gravity="bottom"
                     android:singleLine="true"
                     android:text="@string/lorem_ipsum"
-                    android:textColor="?attr/fg"
                     app:layout_constraintBottom_toTopOf="@+id/mediaArtist"
                     app:layout_constraintEnd_toStartOf="@+id/mediaPlayPause"
                     app:layout_constraintStart_toEndOf="@+id/mediaArtHold"
@@ -85,7 +83,6 @@
                     android:gravity="top"
                     android:singleLine="true"
                     android:text="@string/lorem_ipsum"
-                    android:textColor="?attr/fg_alt"
                     app:layout_constraintBottom_toBottomOf="@+id/mediaArtHold"
                     app:layout_constraintEnd_toEndOf="@+id/mediaTrack"
                     app:layout_constraintHorizontal_bias="0.0"
@@ -94,6 +91,7 @@
 
                 <ImageButton
                     android:id="@+id/mediaPlayPause"
+                    style="@style/Base.Icon"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
                     android:background="?android:selectableItemBackground"
@@ -104,11 +102,11 @@
                     app:layout_constraintBottom_toTopOf="@+id/mediaPositionHold"
                     app:layout_constraintEnd_toStartOf="@+id/mediaSkipNext"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_play"
-                    app:tint="?attr/fg" />
+                    app:srcCompat="@drawable/ic_play" />
 
                 <ImageButton
                     android:id="@+id/mediaSkipNext"
+                    style="@style/Base.Icon"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
                     android:background="?android:selectableItemBackground"
@@ -119,8 +117,7 @@
                     app:layout_constraintBottom_toTopOf="@+id/mediaPositionHold"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_skip_next"
-                    app:tint="?attr/fg" />
+                    app:srcCompat="@drawable/ic_skip_next" />
 
                 <FrameLayout
                     android:id="@+id/mediaPositionHold"
@@ -135,15 +132,13 @@
                         style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:progressBackgroundTint="?attr/bg_alt"
-                        android:progressTint="?attr/fg"
                         android:scaleY="1024" />
 
                     <FrameLayout
                         android:id="@+id/mediaPositionLive"
+                        style="@style/Base.Live"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@color/live_bg">
+                        android:layout_height="match_parent">
 
                     </FrameLayout>
                 </FrameLayout>
@@ -159,10 +154,7 @@
                 <com.google.android.material.tabs.TabLayout
                     android:id="@+id/mediaTabs"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:tabIndicatorColor="?attr/accent"
-                    app:tabSelectedTextColor="?attr/fg"
-                    app:tabTextColor="?attr/fg_alt" />
+                    android:layout_height="wrap_content" />
 
                 <androidx.viewpager2.widget.ViewPager2
                     android:id="@+id/mediaPager"
@@ -179,12 +171,9 @@
         android:id="@+id/navTabs"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="?attr/bg_alt"
         android:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:tabIconTint="?attr/fg"
-        app:tabIndicatorColor="?attr/accent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

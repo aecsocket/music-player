@@ -8,11 +8,22 @@ import java.io.StringWriter
 
 @Parcelize
 class ErrorInfo(
-    val message: String?,
+    val parts: List<ErrorPart>
+) : Parcelable {
+    constructor(context: Context, exs: Collection<Throwable>) :
+        this(exs.map { ErrorPart(context, it) })
+
+    constructor(context: Context, ex: Throwable) :
+        this(listOf(ErrorPart(context, ex)))
+}
+
+@Parcelize
+class ErrorPart(
+    val message: String,
     val stackTrace: String
 ) : Parcelable {
     constructor(message: String, ex: Throwable) :
-        this(ex.message, StringWriter().use { writer ->
+        this(message, StringWriter().use { writer ->
             ex.printStackTrace(PrintWriter(writer))
             writer.buffer.toString()
         })

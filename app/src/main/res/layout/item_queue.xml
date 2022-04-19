@@ -5,7 +5,7 @@
     android:id="@+id/item"
     android:layout_width="match_parent"
     android:layout_height="@dimen/list_item_height"
-    android:background="?attr/selector">
+    android:background="@drawable/selector">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/itemArtHold"
@@ -23,12 +23,12 @@
             android:id="@+id/itemArt"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="?attr/bg_alt"
             android:scaleType="centerCrop" />
     </androidx.cardview.widget.CardView>
 
     <TextView
         android:id="@+id/itemPrimary"
+        style="@style/Base.TextView.Primary"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="8dp"
@@ -36,7 +36,6 @@
         android:gravity="bottom"
         android:singleLine="true"
         android:text="@string/lorem_ipsum"
-        android:textColor="?attr/fg"
         app:layout_constraintBottom_toTopOf="@+id/itemSecondary"
         app:layout_constraintEnd_toStartOf="@+id/itemDragHandle"
         app:layout_constraintStart_toEndOf="@+id/itemArtHold"
@@ -49,7 +48,6 @@
         android:gravity="top"
         android:singleLine="true"
         android:text="@string/lorem_ipsum"
-        android:textColor="?attr/fg_alt"
         app:layout_constraintBottom_toBottomOf="@+id/itemArtHold"
         app:layout_constraintEnd_toEndOf="@+id/itemPrimary"
         app:layout_constraintStart_toStartOf="@+id/itemPrimary"
@@ -57,6 +55,7 @@
 
     <ImageButton
         android:id="@+id/itemDragHandle"
+        style="@style/Base.Icon"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:layout_marginEnd="8dp"
@@ -67,7 +66,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_drag_handle"
-        app:tint="?attr/fg" />
+        app:srcCompat="@drawable/ic_drag_handle" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

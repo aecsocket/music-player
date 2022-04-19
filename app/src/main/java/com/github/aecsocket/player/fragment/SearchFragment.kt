@@ -2,6 +2,7 @@ package com.github.aecsocket.player.fragment
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +10,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
@@ -20,12 +22,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.github.aecsocket.player.App
 import com.github.aecsocket.player.R
-import com.github.aecsocket.player.data.ItemDataAdapter
+import com.github.aecsocket.player.TAG
+import com.github.aecsocket.player.data.*
 import com.github.aecsocket.player.databinding.FragmentSearchBinding
 import com.github.aecsocket.player.error.ErrorHandler
 import com.github.aecsocket.player.error.ErrorInfo
 import com.github.aecsocket.player.modPadding
 import com.github.aecsocket.player.viewmodel.SearchViewModel
+import com.google.android.material.chip.Chip
 import kotlinx.coroutines.launch
 
 class SearchFragment : Fragment() {
@@ -50,6 +54,15 @@ class SearchFragment : Fragment() {
         searchResultsShimmer = binding.searchResultsShimmer
         val searchBtn = binding.searchBtn
         val searchText = binding.searchText
+        val searchService = binding.searchService
+
+        for (service in ItemService.ALL) {
+            searchService.addView(Chip(context).apply {
+                text = service.name(context)
+                isCheckable = true
+            })
+        }
+
         searchText.addTextChangedListener { text ->
             if (text?.length ?: 0 > 0) {
                 searchBtn.setImageResource(R.drawable.ic_clear)
@@ -72,28 +85,35 @@ class SearchFragment : Fragment() {
                     if (query.isEmpty()) {
                         viewModel.cancelQuery()
                     } else {
-                        viewModel.query(lifecycleScope, query)
+                        viewModel.query(
+                            lifecycleScope,
+                            searchService.children
+                                .mapIndexed { idx, chip -> if ((chip as Chip).isChecked) ItemService.ALL[idx] else null }
+                                .filterNotNull()
+                                .toList(),
+                            query)
                     }
                 }
                 return@setOnEditorActionListener true
             }
             return@setOnEditorActionListener false
         }
+
         adapter = ItemDataAdapter(player.queue)
         searchResults.adapter = adapter
 
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.results.collect {
-                    when (it) {
+                viewModel.results.collect { results ->
+                    when (results) {
                         is SearchViewModel.Results.Fetching -> showFetching()
-                        is SearchViewModel.Results.Success -> {
-                            adapter.submitList(it.results)
-                            showResults()
-                        }
-                        is SearchViewModel.Results.Error -> {
-                            ErrorHandler.handle(this@SearchFragment, R.string.error_info_search, ErrorInfo(context, it.ex))
-                            showError()
+                        is SearchViewModel.Results.Complete -> {
+                            adapter.submitList(results.results)
+                            if (results.exs.isNotEmpty()) {
+                                ErrorHandler.handle(this@SearchFragment, R.string.error_info_search,
+                                    ErrorInfo(context, results.exs))
+                            }
+                            showComplete()
                         }
                     }
                 }
@@ -131,14 +151,8 @@ class SearchFragment : Fragment() {
         adapter.submitList(emptyList())
     }
 
-    fun showResults() {
+    fun showComplete() {
         searchResults.visibility = View.VISIBLE
-        searchResultsShimmer.visibility = View.INVISIBLE
-        searchResultsShimmer.stopShimmer()
-    }
-
-    fun showError() {
-        searchResults.visibility = View.INVISIBLE
         searchResultsShimmer.visibility = View.INVISIBLE
         searchResultsShimmer.stopShimmer()
     }

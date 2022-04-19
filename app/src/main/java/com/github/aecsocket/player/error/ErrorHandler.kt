@@ -48,7 +48,7 @@ object ErrorHandler {
                 .notify(NOTIF_ID, NotificationCompat.Builder(context, NOTIF_CHAN_ERROR)
                     .setSmallIcon(R.drawable.ic_bug_report)
                     .setContentTitle(context.getString(infoRes))
-                    .setContentText(error.message)
+                    .setContentText(error.parts.joinToString(separator = "\n") { it.message })
                     .setAutoCancel(true)
                     .setContentIntent(PendingIntent.getActivity(
                         context, 0,

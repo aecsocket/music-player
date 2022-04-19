@@ -110,7 +110,7 @@ class MediaPlayer(
 
                 // NewPipe: player/Player.java
                 override fun onPlayerError(ex: PlaybackException) {
-                    val exo = conn.exo ?: return
+                    val exo = conn.exo
                     Log.w(TAG, "Playback error", ex)
                     when (ex.errorCode) {
                         PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
@@ -199,7 +199,8 @@ class MediaPlayer(
                             conn.exo.prepare()
                         }
                     } catch (ex: Exception) {
-                        ErrorHandler.handle(context, R.string.error_info_stream, ErrorInfo(context, ex))
+                        ErrorHandler.handle(context, R.string.error_info_stream,
+                            ErrorInfo(context, ex))
                         skipNext()
                     }
                 }

@@ -41,7 +41,8 @@ class RouterActivity : AppCompatActivity() {
             lifecycleScope.launch(Dispatchers.IO + CoroutineExceptionHandler { _, ex ->
                 lifecycleScope.launch(Dispatchers.Main) {
                     val context = this@RouterActivity
-                    ErrorHandler.handle(context, R.string.error_info_stream, ErrorInfo(ErrorHandler.getMessage(context, ex), ex))
+                    ErrorHandler.handle(context, R.string.error_info_stream,
+                        ErrorInfo(context, ex))
                     finish()
                 }
             }) {
@@ -55,4 +56,3 @@ class RouterActivity : AppCompatActivity() {
         }
     }
 }
-
