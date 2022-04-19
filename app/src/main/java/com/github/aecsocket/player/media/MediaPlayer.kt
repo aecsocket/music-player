@@ -14,10 +14,11 @@ import com.github.aecsocket.player.*
 import com.github.aecsocket.player.data.StreamData
 import com.github.aecsocket.player.error.ErrorHandler
 import com.github.aecsocket.player.error.ErrorInfo
-import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
+import com.squareup.picasso.RequestCreator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +36,22 @@ const val DURATION_UNKNOWN = -1L
 
 const val PROGRESS_UPDATE_INTERVAL = 10L
 const val RESTART_THRESHOLD = 1000L
+
+sealed class ActiveStreamData(
+    val data: StreamData,
+    val art: RequestCreator? = null
+)
+
+class LoadingStreamData(
+    data: StreamData,
+    art: RequestCreator? = null
+) : ActiveStreamData(data, art)
+
+class LoadedStreamData(
+    data: StreamData,
+    art: RequestCreator? = null,
+    val source: MediaSource
+) : ActiveStreamData(data, art)
 
 class MediaPlayer(
     private val context: Context
@@ -59,8 +76,8 @@ class MediaPlayer(
 
     data class Position(val position: Long, val buffered: Long)
 
-    private val _stream = MutableStateFlow<StreamData?>(null)
-    val stream: StateFlow<StreamData?> = _stream
+    private val _stream = MutableStateFlow<ActiveStreamData?>(null)
+    val stream: StateFlow<ActiveStreamData?> = _stream
     private val _state = MutableStateFlow(STATE_BUFFERING)
     val state: StateFlow<Int> = _state
     private val _duration = MutableStateFlow(DURATION_UNKNOWN)
@@ -99,7 +116,7 @@ class MediaPlayer(
                     if (playWhenReady) {
                         requestAudioFocus()
                         _state.value = STATE_PLAYING
-                        if (_stream.value?.type?.isLive() == true) {
+                        if (_stream.value?.data?.type?.isLive() == true) {
                             conn.exo.seekToDefaultPosition()
                         }
                     } else {
@@ -182,10 +199,10 @@ class MediaPlayer(
             _stream.value = stream
             release()
         } else {
-            if (_stream.value?.same(stream) == true) {
+            if (_stream.value?.data?.same(stream) == true) {
                 seekToDefault()
             } else {
-                _stream.value = stream
+                _stream.value = LoadingStreamData(stream, stream.art)
                 _duration.value = DURATION_UNKNOWN
                 _state.value = STATE_BUFFERING
                 val conn = requireConn()
@@ -195,7 +212,8 @@ class MediaPlayer(
                     try {
                         val source = stream.makeSource(resolver)
                         withContext(Dispatchers.Main) {
-                            conn.exo.setMediaSource(source)
+                            _stream.value = source
+                            conn.exo.addMediaSource(source.source)
                             conn.exo.prepare()
                         }
                     } catch (ex: Exception) {
@@ -233,7 +251,7 @@ class MediaPlayer(
 
     fun play() {
         val conn = conn ?: return
-        if (conn.exo.playbackState == Player.STATE_ENDED || _stream.value?.type?.isLive() == true) {
+        if (conn.exo.playbackState == Player.STATE_ENDED || _stream.value?.data?.type?.isLive() == true) {
             seekToDefault()
         }
         conn.exo.play()

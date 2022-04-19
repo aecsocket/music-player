@@ -6,6 +6,7 @@ import android.view.View
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
 import com.github.aecsocket.player.media.MediaPlayer
+import com.google.android.material.snackbar.Snackbar
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import org.schabi.newpipe.extractor.NewPipe
@@ -93,3 +94,7 @@ class App : Application() {
 fun View.modPadding(left: Int? = null, top: Int? = null, right: Int? = null, bottom: Int? = null) {
     setPadding(left ?: paddingLeft, top ?: paddingTop, right ?: paddingRight, bottom ?: paddingBottom)
 }
+
+fun snackbar(view: View, text: CharSequence, duration: Int) =
+    Snackbar.make(view, text, duration)
+        .setAnimationMode(Snackbar.ANIMATION_MODE_SLIDE)

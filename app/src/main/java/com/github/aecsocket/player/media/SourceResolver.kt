@@ -1,15 +1,11 @@
 package com.github.aecsocket.player.media
 
 import android.content.Context
-import android.util.Log
-import com.github.aecsocket.player.TAG
+import com.github.aecsocket.player.data.StreamData
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.source.MediaSource
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import com.squareup.picasso.Picasso
 import org.schabi.newpipe.extractor.MediaFormat
-import org.schabi.newpipe.extractor.StreamingService
-import org.schabi.newpipe.extractor.playlist.PlaylistInfo
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamType
@@ -27,12 +23,15 @@ class SourceResolver(
 
     class NoStreamsException : Exception()
 
-    fun resolve(info: StreamInfo): MediaSource {
+    fun resolve(stream: StreamData, info: StreamInfo): LoadedStreamData {
+        val art = Picasso.get().load(info.thumbnailUrl)
         if (info.streamType.isLive()) {
-            fun create(factory: MediaSource.Factory, url: String) = factory.createMediaSource(MediaItem.Builder()
-                .setUri(url)
-                .setLiveConfiguration(liveConfig)
-                .build())
+            fun create(factory: MediaSource.Factory, url: String) = LoadedStreamData(
+                stream, art,
+                factory.createMediaSource(MediaItem.Builder()
+                    .setUri(url)
+                    .setLiveConfiguration(liveConfig)
+                    .build()))
 
             return if (info.hlsUrl.isNotEmpty()) create(sources.hlsSourceFactory, info.hlsUrl)
                 else create(sources.dashSourceFactory, info.dashMpdUrl)
@@ -46,36 +45,11 @@ class SourceResolver(
         val best = mostEfficient(streams)
         // TODO diff types of factories?? idk
 
-        return sources.progressiveSourceFactory.createMediaSource(MediaItem.Builder()
-            .setUri(best.url)
-            .build())
+        return LoadedStreamData(stream, art,
+            sources.progressiveSourceFactory.createMediaSource(MediaItem.Builder()
+                .setUri(best.url)
+                .build()))
     }
-
-    fun fromUrl(url: String, service: StreamingService, onComplete: () -> Unit = {}): Flow<MediaSource> = flow {
-        when (service.getLinkTypeByUrl(url)) {
-            StreamingService.LinkType.NONE, StreamingService.LinkType.CHANNEL ->
-                throw UnsupportedServiceException()
-            // todo make better
-            StreamingService.LinkType.STREAM -> {
-                resolve(StreamInfo.getInfo(url))?.let { emit(it) }
-                onComplete()
-            }
-            StreamingService.LinkType.PLAYLIST -> {
-                var curUrl: String? = url
-                while (curUrl != null) {
-                    val playlist = PlaylistInfo.getInfo(curUrl)
-                    playlist.relatedItems.forEach { stream ->
-                        resolve(StreamInfo.getInfo(stream.url))?.let { emit(it) }
-                    }
-                    curUrl = if (playlist.hasNextPage()) playlist.nextPage.url else null
-                }
-                onComplete()
-            }
-            else -> throw IllegalStateException()
-        }
-    }
-
-    class UnsupportedServiceException : Exception()
 
     companion object {
         // 0 = lowest quality

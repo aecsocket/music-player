@@ -59,6 +59,7 @@
     <string name="open_with">Open with</string>
     <string name="error_header">An error occurred.</string>
     <string name="error_subheader">Errors:</string>
+    <string name="must_specify_service">You must specify at least 1 service</string>
     <string name="local">Local</string>
     <string name="yt_music">YT Music</string>
     <string name="spotify">Spotify</string>

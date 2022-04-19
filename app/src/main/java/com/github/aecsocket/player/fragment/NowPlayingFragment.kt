@@ -46,7 +46,7 @@ class NowPlayingFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 player.stream.collect { stream ->
                     val stream = stream ?: return@collect
-                    if (stream.type.isLive()) {
+                    if (stream.data.type.isLive()) {
                         timeDeterminate.visibility = View.INVISIBLE
                         timeLive.visibility = View.VISIBLE
                     } else {
@@ -146,8 +146,8 @@ class NowPlayingFragment : Fragment() {
                 lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                     player.stream.collect { stream ->
                         val stream = stream ?: return@collect
-                        track.text = stream.primaryText(context)
-                        artist.text = stream.secondaryText(context)
+                        track.text = stream.data.primaryText(context)
+                        artist.text = stream.data.secondaryText(context)
                         stream.art?.into(art)
                     }
                 }

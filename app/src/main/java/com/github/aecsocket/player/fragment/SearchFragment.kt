@@ -20,17 +20,17 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
-import com.github.aecsocket.player.App
-import com.github.aecsocket.player.R
-import com.github.aecsocket.player.TAG
+import com.github.aecsocket.player.*
 import com.github.aecsocket.player.data.*
 import com.github.aecsocket.player.databinding.FragmentSearchBinding
 import com.github.aecsocket.player.error.ErrorHandler
 import com.github.aecsocket.player.error.ErrorInfo
-import com.github.aecsocket.player.modPadding
+import com.github.aecsocket.player.error.findView
 import com.github.aecsocket.player.viewmodel.SearchViewModel
 import com.google.android.material.chip.Chip
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
+import java.lang.IllegalStateException
 
 class SearchFragment : Fragment() {
     private val viewModel: SearchViewModel by viewModels()
@@ -85,12 +85,18 @@ class SearchFragment : Fragment() {
                     if (query.isEmpty()) {
                         viewModel.cancelQuery()
                     } else {
+                        val services = searchService.children
+                            .mapIndexed { idx, chip -> if ((chip as Chip).isChecked) ItemService.ALL[idx] else null }
+                            .filterNotNull()
+                            .toList()
+                        if (services.isEmpty()) {
+                            snackbar(
+                                findView() ?: throw IllegalStateException("could not find view"),
+                                getString(R.string.must_specify_service), Snackbar.LENGTH_LONG).show()
+                        }
                         viewModel.query(
                             lifecycleScope,
-                            searchService.children
-                                .mapIndexed { idx, chip -> if ((chip as Chip).isChecked) ItemService.ALL[idx] else null }
-                                .filterNotNull()
-                                .toList(),
+                            services,
                             query)
                     }
                 }

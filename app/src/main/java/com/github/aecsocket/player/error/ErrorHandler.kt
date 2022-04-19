@@ -57,7 +57,7 @@ object ErrorHandler {
                     .build()
                 )
         } else {
-            Snackbar.make(view, context.getString(infoRes), Snackbar.LENGTH_LONG)
+            snackbar(view, context.getString(infoRes), Snackbar.LENGTH_LONG)
                 .setActionTextColor(Color.YELLOW)
                 .setAction(R.string.details) {
                     openActivity(context, error)
@@ -66,11 +66,13 @@ object ErrorHandler {
     }
 
     fun handle(fragment: Fragment, infoRes: Int, error: ErrorInfo) {
-        val view = fragment.view ?: fragment.activity?.findViewById(R.id.content)
-        handle(fragment.requireContext(), infoRes, view, error)
+        handle(fragment.requireContext(), infoRes, fragment.findView(), error)
     }
 
     fun handle(context: Context, infoRes: Int, error: ErrorInfo) {
         handle(context, infoRes, if (context is Activity) context.findViewById<View>(R.id.content) else null, error)
     }
 }
+
+fun Fragment.findView() =
+    view ?: activity?.findViewById(R.id.content)

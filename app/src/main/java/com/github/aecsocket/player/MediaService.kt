@@ -16,13 +16,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.github.aecsocket.player.data.StreamData
 import com.github.aecsocket.player.error.ErrorHandler
 import com.github.aecsocket.player.error.ErrorInfo
-import com.github.aecsocket.player.media.MediaPlayer
-import com.github.aecsocket.player.media.STATE_BUFFERING
-import com.github.aecsocket.player.media.STATE_PAUSED
-import com.github.aecsocket.player.media.STATE_PLAYING
+import com.github.aecsocket.player.media.*
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
 import kotlinx.coroutines.launch
@@ -92,8 +88,9 @@ class MediaService : LifecycleService() {
         Log.d(TAG, "Service destroyed")
     }
 
-    private fun createNotif(stream: StreamData): Notification {
+    private fun createNotif(stream: ActiveStreamData): Notification {
         val conn = player.conn ?: throw IllegalStateException("using media service with no player")
+        val data = stream.data
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         val builder = NotificationCompat.Builder(this, NOTIF_CHAN_MEDIA)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -101,9 +98,9 @@ class MediaService : LifecycleService() {
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .setSmallIcon(R.drawable.ic_library)
             .setShowWhen(false)
-            .setContentTitle(stream.name)
-            .setTicker(stream.name)
-            .setContentText(stream.artist ?: getString(R.string.unknown_artist))
+            .setContentTitle(data.name)
+            .setTicker(data.name)
+            .setContentText(data.artist ?: getString(R.string.unknown_artist))
             .setLargeIcon(art)
             .setContentIntent(PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), flags))
             .addAction(R.drawable.ic_skip_previous, getString(R.string.skip_previous),
@@ -126,11 +123,11 @@ class MediaService : LifecycleService() {
             .build()
     }
 
-    private fun updateNotif(stream: StreamData) {
+    private fun updateNotif(stream: ActiveStreamData) {
         NotificationManagerCompat.from(this).notify(NOTIF_ID, createNotif(stream))
     }
 
-    private fun updateStream(stream: StreamData?) {
+    private fun updateStream(stream: ActiveStreamData?) {
         val stream = stream ?: return
         stream.art?.let { art ->
             artTarget?.let { Picasso.get().cancelRequest(it) }

@@ -3,14 +3,13 @@ package com.github.aecsocket.player.data
 import android.content.Context
 import androidx.recyclerview.widget.DiffUtil
 import com.github.aecsocket.player.R
+import com.github.aecsocket.player.media.LoadedStreamData
 import com.github.aecsocket.player.media.SourceResolver
-import com.google.android.exoplayer2.source.MediaSource
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.RequestCreator
 import kotlinx.coroutines.*
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.StreamingService
-import org.schabi.newpipe.extractor.channel.ChannelInfo
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.playlist.PlaylistInfo
 import org.schabi.newpipe.extractor.stream.StreamInfo
@@ -88,7 +87,7 @@ interface StreamData : ItemData {
     override fun primaryText(context: Context) = name
     override fun secondaryText(context: Context) = artist ?: context.getString(R.string.unknown_artist)
 
-    fun makeSource(resolver: SourceResolver): MediaSource
+    fun makeSource(resolver: SourceResolver): LoadedStreamData
 }
 
 data class ServiceStreamData(
@@ -105,7 +104,7 @@ data class ServiceStreamData(
         super.same(other) || other is ServiceStreamData && url == other.url
 
     override fun makeSource(resolver: SourceResolver) =
-        resolver.resolve(StreamInfo.getInfo(service, url))
+        resolver.resolve(this, StreamInfo.getInfo(service, url))
 }
 
 interface ArtistData : ItemData {
