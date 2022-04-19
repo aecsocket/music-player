@@ -28,6 +28,7 @@ import com.github.aecsocket.player.error.ErrorInfo
 import com.github.aecsocket.player.error.findView
 import com.github.aecsocket.player.viewmodel.SearchViewModel
 import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import java.lang.IllegalStateException
@@ -36,6 +37,7 @@ class SearchFragment : Fragment() {
     private val viewModel: SearchViewModel by viewModels()
     private lateinit var adapter: ItemDataAdapter
     lateinit var searchBar: View
+    lateinit var searchService: ChipGroup
     lateinit var searchResults: RecyclerView
     lateinit var searchResultsShimmer: ShimmerFrameLayout
 
@@ -50,16 +52,20 @@ class SearchFragment : Fragment() {
         val inputMethods = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 
         searchBar = binding.searchBar
+        searchService = binding.searchService
         searchResults = binding.searchResults
         searchResultsShimmer = binding.searchResultsShimmer
         val searchBtn = binding.searchBtn
         val searchText = binding.searchText
-        val searchService = binding.searchService
 
         for (service in ItemService.ALL) {
             searchService.addView(Chip(context).apply {
                 text = service.name(context)
                 isCheckable = true
+                // check the first non-local service
+                if (service !is LocalItemService && selectedServices().isEmpty()) {
+                    isChecked = true
+                }
             })
         }
 
@@ -85,10 +91,7 @@ class SearchFragment : Fragment() {
                     if (query.isEmpty()) {
                         viewModel.cancelQuery()
                     } else {
-                        val services = searchService.children
-                            .mapIndexed { idx, chip -> if ((chip as Chip).isChecked) ItemService.ALL[idx] else null }
-                            .filterNotNull()
-                            .toList()
+                        val services = selectedServices()
                         if (services.isEmpty()) {
                             snackbar(
                                 findView() ?: throw IllegalStateException("could not find view"),
@@ -150,14 +153,19 @@ class SearchFragment : Fragment() {
         adapter.dispose()
     }
 
-    fun showFetching() {
+    private fun selectedServices() = searchService.children
+        .mapIndexed { idx, chip -> if ((chip as Chip).isChecked) ItemService.ALL[idx] else null }
+        .filterNotNull()
+        .toList()
+
+    private fun showFetching() {
         searchResults.visibility = View.INVISIBLE
         searchResultsShimmer.visibility = View.VISIBLE
         searchResultsShimmer.startShimmer()
         adapter.submitList(emptyList())
     }
 
-    fun showComplete() {
+    private fun showComplete() {
         searchResults.visibility = View.VISIBLE
         searchResultsShimmer.visibility = View.INVISIBLE
         searchResultsShimmer.stopShimmer()

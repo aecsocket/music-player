@@ -44,7 +44,11 @@
         <item name="android:tint">?attr/colorOnSurface</item>
     </style>
 
-    <style name="Base.Backing" parent="Base">
+    <style name="Base.Background" parent="Base">
+        <item name="android:background">?android:attr/colorBackground</item>
+    </style>
+
+    <style name="Base.Surface" parent="Base">
         <item name="android:background">?attr/colorSurface</item>
     </style>
 

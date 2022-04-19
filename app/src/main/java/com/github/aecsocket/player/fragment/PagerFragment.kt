@@ -15,6 +15,7 @@ import com.github.aecsocket.player.App
 import com.github.aecsocket.player.R
 import com.github.aecsocket.player.databinding.FragmentPagerBinding
 import com.github.aecsocket.player.media.isLive
+import com.github.aecsocket.player.modPadding
 import com.github.aecsocket.player.view.PagerAdapter
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.tabs.TabLayout
@@ -48,6 +49,15 @@ class PagerFragment : Fragment() {
         mediaSheet = BottomSheetBehavior.from(binding.mediaSheet).apply {
             state = BottomSheetBehavior.STATE_HIDDEN
         }
+        mediaSheet.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+            override fun onStateChanged(sheet: View, state: Int) {
+                if (state == BottomSheetBehavior.STATE_HIDDEN) {
+                    player.release()
+                }
+            }
+
+            override fun onSlide(sheet: View, offset: Float) {}
+        })
         mediaBar = binding.mediaBar
         mediaTabs = binding.mediaTabs
         navTabs = binding.navTabs
@@ -143,9 +153,7 @@ class PagerFragment : Fragment() {
         view.post {
             val insets = WindowInsetsCompat.toWindowInsetsCompat(window.decorView.rootWindowInsets)
             val inset = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            mediaBar.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                bottomMargin = inset.top
-            }
+            mediaTabs.modPadding(top = inset.top)
             mediaSheet.peekHeight = mediaBar.height
             mediaCoordinator.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 height = view.height - navTabs.height + mediaBar.height + mediaTabs.height
