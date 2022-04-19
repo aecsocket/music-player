@@ -1,13 +1,10 @@
 package com.github.aecsocket.player.media
 
 import android.content.Context
-import android.net.Uri
-import com.github.aecsocket.player.data.DataItem
-import com.google.android.exoplayer2.C
+import android.util.Log
+import com.github.aecsocket.player.TAG
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.source.MediaSource
-import com.google.android.exoplayer2.upstream.DataSource
-import com.google.common.base.Ascii
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.schabi.newpipe.extractor.MediaFormat
@@ -17,7 +14,6 @@ import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamType
 import java.lang.Exception
-import java.util.*
 
 const val STREAM_EDGE_GAP = 10_000L
 
@@ -29,7 +25,9 @@ class SourceResolver(
         .setTargetOffsetMs(STREAM_EDGE_GAP)
         .build()
 
-    fun resolve(info: StreamInfo): MediaSource? {
+    class NoStreamsException : Exception()
+
+    fun resolve(info: StreamInfo): MediaSource {
         if (info.streamType.isLive()) {
             fun create(factory: MediaSource.Factory, url: String) = factory.createMediaSource(MediaItem.Builder()
                 .setUri(url)
@@ -42,10 +40,10 @@ class SourceResolver(
 
         val streams = info.audioStreams
         if (streams.isEmpty())
-            return null
+            throw NoStreamsException()
 
         // TODO highest quality or lowest data
-        val best = highestQuality(streams)
+        val best = mostEfficient(streams)
         // TODO diff types of factories?? idk
 
         return sources.progressiveSourceFactory.createMediaSource(MediaItem.Builder()

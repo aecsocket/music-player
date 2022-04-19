@@ -8,55 +8,49 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.github.aecsocket.player.App
+import com.github.aecsocket.player.data.QueueAdapter
+import com.github.aecsocket.player.data.ServiceStreamData
 import com.github.aecsocket.player.databinding.FragmentQueueBinding
+import com.github.aecsocket.player.media.StreamQueue
 
 class QueueFragment : Fragment() {
-    private lateinit var adapter: QueueItemAdapter
+    private lateinit var adapter: QueueAdapter
+    private lateinit var queueListener: StreamQueue.Listener
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         val binding = FragmentQueueBinding.inflate(inflater, container, false)
-        val context = context ?: return binding.root
-        val player = (context.applicationContext as App).player
+        val context = requireContext()
+        val player = App.player(context)
 
-        val items = binding.queueItems
+        val queueItems = binding.queueItems
         val touchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.UP or ItemTouchHelper.DOWN,
-            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+            ItemTouchHelper.RIGHT
         ) {
-            override fun onMove(
-                view: RecyclerView,
-                from: RecyclerView.ViewHolder,
-                to: RecyclerView.ViewHolder
-            ): Boolean {
+            override fun onMove(view: RecyclerView, from: RecyclerView.ViewHolder, to: RecyclerView.ViewHolder): Boolean {
                 player.queue.move(from.layoutPosition, to.layoutPosition)
                 return true
             }
 
             override fun onSwiped(holder: RecyclerView.ViewHolder, direction: Int) {
-                val position = holder.layoutPosition
-                player.queue.remove(position)
+                player.queue.remove(holder.layoutPosition)
             }
-        })
-        adapter = QueueItemAdapter(touchHelper = touchHelper)
-        items.adapter = adapter
-        touchHelper.attachToRecyclerView(items)
-        player.queue.getState().observe(viewLifecycleOwner) {
-            adapter.submitState(it)
-            val childCount = items.childCount
-            for (i in 0..childCount) {
-                val child = items.getChildAt(i) ?: continue
-                val holder = items.getChildViewHolder(child) as QueueItemAdapter.ViewHolder
-                holder.updateSelected(it.index)
-            }
-        }
 
-        binding.queueClearAll.setOnClickListener {
-            player.queue.clear()
-        }
-        binding.queueJump.setOnClickListener {
-            items.layoutManager!!.scrollToPosition(player.queue.getState().value?.index ?: 0)
-        }
+            override fun isLongPressDragEnabled() = false
+        })
+        adapter = QueueAdapter(touchHelper, player.queue)
+        queueItems.adapter = adapter
+        touchHelper.attachToRecyclerView(queueItems)
 
         return binding.root
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        adapter.dispose()
     }
 }

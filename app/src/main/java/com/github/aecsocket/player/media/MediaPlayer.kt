@@ -7,245 +7,217 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.media.AudioAttributesCompat
-import androidx.media.AudioAttributesCompat.CONTENT_TYPE_MUSIC
-import androidx.media.AudioAttributesCompat.USAGE_MEDIA
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.github.aecsocket.player.*
 import com.github.aecsocket.player.data.StreamData
+import com.github.aecsocket.player.error.ErrorHandler
+import com.github.aecsocket.player.error.ErrorInfo
+import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.max
-import kotlin.math.min
+import java.lang.Exception
+import java.lang.IllegalStateException
 
-const val RESTART_THRESHOLD = 1000
-const val PROGRESS_UPDATE_INTERVAL = 10L
 const val STATE_PAUSED = 0
 const val STATE_PLAYING = 1
 const val STATE_BUFFERING = 2
+
 const val DURATION_UNKNOWN = -1L
-const val DURATION_LIVE = -2L
+
+const val PROGRESS_UPDATE_INTERVAL = 10L
+const val RESTART_THRESHOLD = 1000L
 
 class MediaPlayer(
     private val context: Context
 ) : AudioManager.OnAudioFocusChangeListener {
-    var handle: PlayerHandle? = null
     val queue = StreamQueue().apply {
-        getCurrent().observeForever { onStreamChange(it) }
+        addListener(object : StreamQueue.Listener {
+            override fun onSelect(from: Int, to: Int) {
+                this@MediaPlayer.onChangeStream(getOr(to))
+            }
+        })
     }
-    val resolver: SourceResolver
+    var conn: PlayerConnection? = null
+    val resolver = SourceResolver(context, DataSources(context, DefaultBandwidthMeter.Builder(context).build()))
 
-    init {
-        val sources = DataSources(context, DefaultBandwidthMeter.Builder(context).build())
-        resolver = SourceResolver(context, sources)
-    }
-
-    private val scope = kotlinx.coroutines.MainScope()
+    private val scope = MainScope()
+    private val handler = Handler(Looper.getMainLooper())
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val focusRequest = AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
         .setAudioAttributes(audioAttributes)
         .setOnAudioFocusChangeListener(this)
         .build()
-    private val handler = Handler(Looper.getMainLooper())
-    private val state = MutableLiveData<Int>().apply { postValue(STATE_PAUSED) }
-    private val current = MutableLiveData<StreamData>()
-    private val position = MutableLiveData<Long>().apply { postValue(0) }
-    private val buffered = MutableLiveData<Long>().apply { postValue(0) }
-    private val duration = MutableLiveData<Long>().apply { postValue(DURATION_UNKNOWN) }
-    val repeatMode = MutableLiveData<Int>().apply {
-        postValue(Player.REPEAT_MODE_OFF)
-        observeForever { handle?.exo?.repeatMode = it }
-    }
-    val shuffleMode = MutableLiveData<Boolean>().apply {
-        postValue(false)
-        observeForever { handle?.exo?.shuffleModeEnabled = it }
-    }
-    private var exoListener: Player.Listener? = null
 
-    fun getState(): LiveData<Int> = state
-    fun getCurrent(): LiveData<StreamData> = current
-    fun getPosition(): LiveData<Long> = position
-    fun getBuffered(): LiveData<Long> = buffered
-    fun getDuration(): LiveData<Long> = duration
+    data class Position(val position: Long, val buffered: Long)
 
-    fun requirePlayer(): PlayerHandle {
-        return handle ?: PlayerHandle(context).also { handle ->
-            val exoListener = exoListener(handle).also { this.exoListener = it }
-            handle.exo.addListener(exoListener)
-            this.handle = handle
-            postUpdateProgress()
+    private val _stream = MutableStateFlow<StreamData?>(null)
+    val stream: StateFlow<StreamData?> = _stream
+    private val _state = MutableStateFlow(STATE_BUFFERING)
+    val state: StateFlow<Int> = _state
+    private val _duration = MutableStateFlow(DURATION_UNKNOWN)
+    val duration: StateFlow<Long> = _duration
+    private val _position = MutableStateFlow(Position(0, 0))
+    val position: StateFlow<Position> = _position
+
+    private fun requestAudioFocus() = AudioManagerCompat.requestAudioFocus(audioManager, focusRequest)
+    private fun abandonAudioFocus() = AudioManagerCompat.abandonAudioFocusRequest(audioManager, focusRequest)
+
+    fun requireConn(): PlayerConnection {
+        return conn ?: PlayerConnection(context) { conn ->
+            object : Player.Listener {
+                fun playOrPaused(playWhenReady: Boolean) =
+                    if (playWhenReady) STATE_PLAYING else STATE_PAUSED
+
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    when (playbackState) {
+                        Player.STATE_IDLE, Player.STATE_BUFFERING -> _state.value = STATE_BUFFERING
+                        Player.STATE_READY -> {
+                            requestAudioFocus()
+                            _state.value = playOrPaused(conn.exo.playWhenReady)
+                            _duration.value = conn.exo.duration
+                        }
+                        Player.STATE_ENDED -> {
+                            // if we've just cleared all media items
+                            // (we're about to buffer the next item)
+                            if (_state.value == STATE_BUFFERING)
+                                return
+                            skipNext()
+                        }
+                    }
+                }
+
+                override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                    if (playWhenReady) {
+                        requestAudioFocus()
+                        _state.value = STATE_PLAYING
+                        if (_stream.value?.type?.isLive() == true) {
+                            conn.exo.seekToDefaultPosition()
+                        }
+                    } else {
+                        abandonAudioFocus()
+                        _state.value = STATE_PAUSED
+                    }
+                }
+
+                // NewPipe: player/Player.java
+                override fun onPlayerError(ex: PlaybackException) {
+                    val exo = conn.exo ?: return
+                    Log.w(TAG, "Playback error", ex)
+                    when (ex.errorCode) {
+                        PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
+                            exo.seekToDefaultPosition()
+                            exo.prepare()
+                        }
+                        PlaybackException.ERROR_CODE_IO_INVALID_HTTP_CONTENT_TYPE,
+                        PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
+                        PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND,
+                        PlaybackException.ERROR_CODE_IO_NO_PERMISSION,
+                        PlaybackException.ERROR_CODE_IO_CLEARTEXT_NOT_PERMITTED,
+                        PlaybackException.ERROR_CODE_IO_READ_POSITION_OUT_OF_RANGE,
+                        PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
+                        PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
+                        PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
+                        PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED -> {
+                            // TODO exception handler here
+                            skipNext()
+                        }
+                        PlaybackException.ERROR_CODE_TIMEOUT,
+                        PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
+                        PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+                        PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT,
+                        PlaybackException.ERROR_CODE_UNSPECIFIED -> {
+                            exo.prepare()
+                        }
+                        else -> release()
+                    }
+                }
+            }
+        }.also { conn ->
+            this.conn = conn
+            postUpdatePosition()
             ContextCompat.startForegroundService(context, Intent(context, MediaService::class.java))
             Log.d(TAG, "Player created")
         }
     }
 
     fun release() {
-        if (handle == null)
-            return
+        val conn = conn ?: return
         context.stopService(Intent(context, MediaService::class.java))
         AudioManagerCompat.abandonAudioFocusRequest(audioManager, focusRequest)
-        handle?.let {
-            it.exo.removeListener(exoListener!!)
-            it.release()
-        }
-        handle = null
+        conn.release()
+        this.conn = null
         queue.resetIndex()
         Log.d(TAG, "Player released")
     }
 
-    private fun requestAudioFocus() = AudioManagerCompat.requestAudioFocus(audioManager, focusRequest)
-    private fun abandonAudioFocus() = AudioManagerCompat.abandonAudioFocusRequest(audioManager, focusRequest)
-
-    private fun exoListener(handle: PlayerHandle): Player.Listener {
-        return object : Player.Listener {
-            fun playOrPaused(playWhenReady: Boolean) =
-                if (playWhenReady) STATE_PLAYING else STATE_PAUSED
-
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                when (playbackState) {
-                    Player.STATE_IDLE, Player.STATE_BUFFERING -> state.postValue(STATE_BUFFERING)
-                    Player.STATE_READY -> {
-                        postDuration(handle.exo.duration)
-                        requestAudioFocus()
-                        state.postValue(playOrPaused(handle.exo.playWhenReady))
-                    }
-                    Player.STATE_ENDED -> {
-                        if (current.value?.type?.isLive() == true) {
-                            handle.exo.prepare()
-                            handle.exo.play()
-                        } else {
-                            skipNext()
-                        }
-                    }
-                }
-            }
-
-            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                if (playWhenReady) {
-                    requestAudioFocus()
-                    state.postValue(STATE_PLAYING)
-                    if (current.value?.type?.isLive() == true) {
-                        // catch up to the end
-                        handle.exo.seekToDefaultPosition()
-                    }
-                } else {
-                    abandonAudioFocus()
-                    state.postValue(STATE_PAUSED)
-                }
-            }
-
-            // NewPipe: player/Player.java
-            override fun onPlayerError(ex: PlaybackException) {
-                val exo = this@MediaPlayer.handle?.exo ?: return
-                Log.w(TAG, "Playback error", ex)
-                when (ex.errorCode) {
-                    PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
-                        exo.seekToDefaultPosition()
-                        exo.prepare()
-                    }
-                    PlaybackException.ERROR_CODE_IO_INVALID_HTTP_CONTENT_TYPE,
-                    PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
-                    PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND,
-                    PlaybackException.ERROR_CODE_IO_NO_PERMISSION,
-                    PlaybackException.ERROR_CODE_IO_CLEARTEXT_NOT_PERMITTED,
-                    PlaybackException.ERROR_CODE_IO_READ_POSITION_OUT_OF_RANGE,
-                    PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
-                    PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
-                    PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
-                    PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED -> {
-                        // TODO exception handler here
-                        skipNext()
-                    }
-                    PlaybackException.ERROR_CODE_TIMEOUT,
-                    PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
-                    PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
-                    PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT,
-                    PlaybackException.ERROR_CODE_UNSPECIFIED -> {
-                        exo.prepare()
-                    }
-                    else -> release()
-                }
-            }
-        }
-    }
-
-    private fun postDuration(dur: Long) {
-        if (current.value?.type?.isLive() == true) {
-            duration.postValue(DURATION_LIVE)
-        } else {
-            duration.postValue(dur)
-        }
-    }
-
     override fun onAudioFocusChange(focus: Int) {
-        val handle = handle ?: return
+        val conn = conn ?: return
         when (focus) {
             AudioManager.AUDIOFOCUS_GAIN -> {
-                handle.exo.volume = 1f
-                handle.exo.play()
+                conn.exo.volume = 1f
+                conn.exo.play()
                 // TODO anim volume to 1
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                handle.exo.volume = 0.2f
+                conn.exo.volume = 0.2f
                 // TODO duck
             }
             AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                handle.exo.pause()
+                conn.exo.pause()
             }
         }
     }
 
-    private fun onStreamChange(stream: StreamData?) {
+    private fun onChangeStream(stream: StreamData?) {
         if (stream == null) {
+            _stream.value = stream
             release()
         } else {
-            val cur = this.current.value
-            if (handle != null && cur?.id == stream.id) {
-                // we just restarted the current stream AND we're still playing
-                seekTo(0)
+            if (_stream.value?.same(stream) == true) {
+                seekToDefault()
             } else {
-                // we post a value before anything else, so our service can get the current track
-                // before we create it, and avoiding an illegal state
-                this.current.postValue(stream)
-                duration.postValue(DURATION_UNKNOWN)
-                state.postValue(STATE_BUFFERING)
-                val handle = requirePlayer()
-                handle.exo.clearMediaItems()
+                _stream.value = stream
+                _duration.value = DURATION_UNKNOWN
+                _state.value = STATE_BUFFERING
+                val conn = requireConn()
+                conn.exo.clearMediaItems()
+
                 scope.launch(Dispatchers.IO) {
-                    val source = resolver.resolve(stream.request())
-                    withContext(Dispatchers.Main) {
-                        if (source == null) {
-                            // TODO give an exception
-                            skipNext()
-                        } else {
-                            handle.exo.setMediaSource(source)
-                            handle.exo.prepare()
+                    try {
+                        val source = stream.makeSource(resolver)
+                        withContext(Dispatchers.Main) {
+                            conn.exo.setMediaSource(source)
+                            conn.exo.prepare()
                         }
+                    } catch (ex: Exception) {
+                        ErrorHandler.handle(context, R.string.error_info_stream, ErrorInfo(context, ex))
+                        skipNext()
                     }
                 }
             }
         }
     }
 
-    private fun postUpdateProgress() {
+    private fun postUpdatePosition() {
         handler.postDelayed({
-            updateProgress()
-            if (handle != null)
-                postUpdateProgress()
+            updatePosition()
+            if (conn != null)
+                postUpdatePosition()
         }, PROGRESS_UPDATE_INTERVAL)
     }
 
-    private fun updateProgress() {
-        val handle = handle ?: return
-        position.postValue(handle.exo.currentPosition)
-        buffered.postValue(handle.exo.bufferedPosition)
+    private fun updatePosition() {
+        val conn = conn ?: return
+        _position.value = Position(conn.exo.currentPosition, conn.exo.bufferedPosition)
     }
 
     fun handleBroadcast(intent: Intent) {
@@ -259,41 +231,21 @@ class MediaPlayer(
     }
 
     fun play() {
-        val handle = handle ?: return
-        requestAudioFocus()
-        if (handle.getState() == Player.STATE_ENDED) {
-            if (queue.getState().value?.index == 0) {
-                handle.exo.seekToDefaultPosition()
-            } else {
-                queue.setIndex(0)
-            }
+        val conn = conn ?: return
+        if (conn.exo.playbackState == Player.STATE_ENDED || _stream.value?.type?.isLive() == true) {
+            seekToDefault()
         }
-        handle.exo.play()
+        conn.exo.play()
     }
 
     fun pause() {
-        val handle = handle ?: return
-        abandonAudioFocus()
-        handle.exo.pause()
+        val conn = conn ?: return
+        conn.exo.pause()
     }
 
     fun skipNext() {
+        IllegalStateException("SKIP NEXT").printStackTrace()
         queue.offsetIndex(1)
-        /* TODO
-        val state = queue.getState().value ?: return
-        if (state.index < state.items.size - 1) {
-            queue.offsetIndex(1)
-        } else {
-            when (val repeat = repeatMode.value) {
-                REPEAT_MODE_ALL, REPEAT_MODE_ONE -> {
-                    queue.setIndex(0)
-                    if (repeat == REPEAT_MODE_ONE) {
-                        repeatMode.postValue(REPEAT_MODE_OFF)
-                    }
-                }
-                else -> {}
-            }
-        }*/
     }
 
     fun skipPrevious() {
@@ -301,33 +253,31 @@ class MediaPlayer(
     }
 
     fun restartOrSkipPrevious() {
-        val handle = handle ?: return
-        if (handle.exo.contentPosition > RESTART_THRESHOLD) {
-            handle.exo.seekToDefaultPosition()
-            updateProgress()
+        val conn = conn ?: return
+        if (conn.exo.currentPosition > RESTART_THRESHOLD) {
+            conn.exo.seekToDefaultPosition()
+            // todo update position
         } else {
             skipPrevious()
         }
     }
 
     fun seekTo(position: Long) {
-        val handle = handle ?: return
-        handle.exo.seekTo(max(0, min(handle.exo.duration, position)))
-        updateProgress()
+        val conn = conn ?: return
+        conn.exo.seekTo(position)
+        updatePosition()
     }
 
-    fun nextRepeatMode() {
-        repeatMode.value = ((repeatMode.value ?: 0) + 1) % 3
-    }
-
-    fun toggleShuffleMode() {
-        shuffleMode.value = !(shuffleMode.value ?: false)
+    fun seekToDefault() {
+        val conn = conn ?: return
+        conn.exo.seekToDefaultPosition()
+        updatePosition()
     }
 
     companion object {
         val audioAttributes: AudioAttributesCompat = AudioAttributesCompat.Builder()
-            .setContentType(CONTENT_TYPE_MUSIC)
-            .setUsage(USAGE_MEDIA)
+            .setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
+            .setUsage(AudioAttributesCompat.USAGE_MEDIA)
             .build()
     }
 }

@@ -5,7 +5,7 @@
     android:id="@+id/item"
     android:layout_width="match_parent"
     android:layout_height="@dimen/list_item_height"
-    android:background="?android:selectableItemBackground">
+    android:background="?attr/selector">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/itemArtHold"
@@ -14,46 +14,41 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
-        app:cardCornerRadius="1024dp"
+        app:cardBackgroundColor="?attr/shimmer"
+        app:cardElevation="2dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="V,1:1"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:id="@+id/itemArt"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="?attr/bg_alt"
-            android:scaleType="centerCrop" />
-    </androidx.cardview.widget.CardView>
-
-    <TextView
+    <FrameLayout
         android:id="@+id/itemPrimary"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:gravity="bottom"
-        android:singleLine="true"
-        android:text="@string/lorem_ipsum"
-        android:textColor="?attr/fg"
+        android:layout_marginBottom="2dp"
+        android:background="?attr/shimmer"
+        android:elevation="2dp"
         app:layout_constraintBottom_toTopOf="@+id/itemSecondary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/itemArtHold"
-        app:layout_constraintTop_toTopOf="@+id/itemArtHold" />
+        app:layout_constraintTop_toTopOf="@+id/itemArtHold">
 
-    <TextView
+    </FrameLayout>
+
+    <FrameLayout
         android:id="@+id/itemSecondary"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:gravity="top"
-        android:singleLine="true"
-        android:text="@string/lorem_ipsum"
-        android:textColor="?attr/fg_alt"
+        android:layout_marginTop="2dp"
+        android:background="?attr/shimmer"
+        android:elevation="2dp"
         app:layout_constraintBottom_toBottomOf="@+id/itemArtHold"
         app:layout_constraintEnd_toEndOf="@+id/itemPrimary"
         app:layout_constraintStart_toStartOf="@+id/itemPrimary"
-        app:layout_constraintTop_toBottomOf="@+id/itemPrimary" />
+        app:layout_constraintTop_toBottomOf="@+id/itemPrimary">
+
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

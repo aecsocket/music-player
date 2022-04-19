@@ -1,10 +1,10 @@
 package com.github.aecsocket.player.error
 
+import android.content.Context
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import java.io.PrintWriter
 import java.io.StringWriter
-
 
 @Parcelize
 class ErrorInfo(
@@ -16,4 +16,7 @@ class ErrorInfo(
             ex.printStackTrace(PrintWriter(writer))
             writer.buffer.toString()
         })
+
+    constructor(context: Context, ex: Throwable) :
+        this(ErrorHandler.getMessage(context, ex), ex)
 }

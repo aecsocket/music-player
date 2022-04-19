@@ -1,89 +1,74 @@
 package com.github.aecsocket.player.viewmodel
 
-import androidx.lifecycle.*
-import com.github.aecsocket.player.data.*
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import com.github.aecsocket.player.R
+import com.github.aecsocket.player.data.ItemData
+import com.github.aecsocket.player.data.RemoteArtistData
+import com.github.aecsocket.player.data.ServiceStreamData
+import com.github.aecsocket.player.data.asData
+import com.github.aecsocket.player.error.ErrorHandler
+import com.github.aecsocket.player.error.ErrorInfo
+import com.squareup.picasso.Picasso
 import kotlinx.coroutines.*
-import org.schabi.newpipe.extractor.InfoItem
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.channel.ChannelInfo
+import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
-import org.schabi.newpipe.extractor.playlist.PlaylistInfo
+import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 import org.schabi.newpipe.extractor.search.SearchInfo
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import kotlin.coroutines.CoroutineContext
+import org.schabi.newpipe.extractor.stream.StreamInfoItem
 
 class SearchViewModel : ViewModel() {
-    private var results: MutableList<DataItem>? = null
-    private val dResults = MutableLiveData<List<DataItem>?>()
+    sealed class Results {
+        object Fetching : Results()
+        data class Success(val results: List<ItemData>): Results()
+        data class Error(val ex: Throwable): Results()
+    }
+
+    private val _results = MutableStateFlow<Results>(Results.Success(emptyList()))
+    val results: StateFlow<Results> = _results
+
     private var resultsJob: Job? = null
 
-    fun getResults(): LiveData<List<DataItem>?> = dResults
-
-    private fun postResults(results: MutableList<DataItem>?) {
-        this.results = results
-        dResults.postValue(this.results)
-    }
-
-    private fun addResult(item: DataItem?) {
-        if (item == null)
-            return
-        results?.let {
-            it.add(item)
-            dResults.postValue(results)
-        }
-    }
-
-    fun loadResults(
-        query: String,
+    fun query(
         scope: CoroutineScope,
-        dispatcher: CoroutineContext
+        query: String
     ) {
-        this.results = mutableListOf()
-        dResults.postValue(null)
-        resultsJob?.cancel()
+        val dispatcher = Dispatchers.IO + CoroutineExceptionHandler { _, ex ->
+            _results.value = Results.Error(ex)
+        }
 
+        _results.value = Results.Fetching
+        resultsJob?.cancel()
         resultsJob = scope.launch {
             try {
-                // try getting from a URL
                 val service = NewPipe.getServiceByUrl(query)
                 scope.launch(dispatcher) {
-                    DataItem.requestStreams(query, service, scope)?.let {
-                        postResults(it.toMutableList())
+                    ItemData.requestStreams(query, service, scope)?.let {
+                        _results.value = Results.Success(it)
                     }
                 }
             } catch (ex: ExtractionException) {
-                // not a known service, do a search instead
                 scope.launch(dispatcher) {
-                    val service = NewPipe.getService(0) // TODO change service
-                    val search = SearchInfo.getInfo(service, service.searchQHFactory.fromQuery(query))
-                    for (info in search.relatedItems) {
-                        when (info.infoType) {
-                            InfoItem.InfoType.STREAM -> {
-                                scope.launch(dispatcher) {
-                                    addResult(StreamInfo.getInfo(service, info.url).asData(service))
-                                }
-                            }
-                            InfoItem.InfoType.PLAYLIST -> {
-                                scope.launch(dispatcher) {
-                                    addResult(PlaylistInfo.getInfo(service, info.url).asData(service))
-                                    //results.postValue((results.value ?: emptyList()) + PlaylistInfo.getInfo(service, info.url)
-                                    //    .asData(service))
-                                }
-                            }
-                            InfoItem.InfoType.CHANNEL -> {
-                                scope.launch(dispatcher) {
-                                    addResult(ChannelInfo.getInfo(service, info.url).asData(service))
-                                    //results.postValue((results.value ?: emptyList()) + ChannelInfo.getInfo(service, info.url)
-                                    //    .asData(service))
-                                }
-                            }
-                            else -> {
-                                // todo unhandled
-                            }
-                        }
-                    }
+                    val service = NewPipe.getService(0)
+                    val response = SearchInfo.getInfo(service, service.searchQHFactory.fromQuery(query))
+                    _results.value = Results.Success(response.relatedItems.mapNotNull { when (it) {
+                        is StreamInfoItem -> it.asData(service)
+                        is ChannelInfoItem -> RemoteArtistData(
+                            name = it.name,
+                            art = Picasso.get().load(it.thumbnailUrl))
+                        is PlaylistInfoItem -> null
+                        else -> null
+                    }})
                 }
             }
         }
+    }
+
+    fun cancelQuery() {
+        _results.value = Results.Success(emptyList())
+        resultsJob?.cancel()
     }
 }

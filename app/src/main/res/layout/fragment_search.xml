@@ -2,99 +2,111 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/search"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?attr/bg" >
 
     <com.facebook.shimmer.ShimmerFrameLayout
-        android:id="@+id/searchItemsShimmer"
+        android:id="@+id/searchResultsShimmer"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:clipToPadding="false"
-        android:paddingTop="64dp"
+        android:paddingTop="@dimen/search_bar_height"
+        android:paddingBottom="@dimen/media_bar_height"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        tools:listitem="@layout/item_generic">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <include layout="@layout/item_skeleton" />
+            <include layout="@layout/item_shimmer" />
 
-            <include layout="@layout/item_skeleton" />
+            <include layout="@layout/item_shimmer" />
 
-            <include layout="@layout/item_skeleton" />
+            <include layout="@layout/item_shimmer" />
 
-            <include layout="@layout/item_skeleton" />
+            <include layout="@layout/item_shimmer" />
 
-            <include layout="@layout/item_skeleton" />
+            <include layout="@layout/item_shimmer" />
+
         </LinearLayout>
 
     </com.facebook.shimmer.ShimmerFrameLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/searchItems"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:id="@+id/searchResults"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:clipToPadding="false"
-        android:paddingTop="64dp"
-        android:paddingBottom="64dp"
+        android:paddingTop="@dimen/search_bar_height"
+        android:paddingBottom="@dimen/media_bar_height"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:listitem="@layout/item_skeleton" />
+        tools:listitem="@layout/item_generic" />
 
     <FrameLayout
-        android:id="@+id/searchBarContainer"
+        android:id="@+id/searchBar"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/search_bar_height"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/searchBar"
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            android:background="@drawable/bg_alt_capsule"
-            android:elevation="10dp">
+            app:cardCornerRadius="1024dp"
+            app:cardElevation="8dp">
 
-            <ImageButton
-                android:id="@+id/searchAction"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:background="@null"
-                android:contentDescription="@string/search"
-                android:minWidth="48dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.0"
-                app:srcCompat="@drawable/ic_search" />
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/bg_alt">
 
-            <EditText
-                android:id="@+id/searchField"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_marginEnd="16dp"
-                android:background="@null"
-                android:hint="@string/search_hint"
-                android:imeOptions="actionSearch"
-                android:importantForAutofill="no"
-                android:inputType="textNoSuggestions|textPersonName"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:textColorHint="?attr/fg_alt"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/searchAction"
-                app:layout_constraintTop_toTopOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                <ImageButton
+                    android:id="@+id/searchBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="4dp"
+                    android:background="@null"
+                    android:contentDescription="@string/search"
+                    android:padding="12dp"
+                    android:scaleType="centerCrop"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintDimensionRatio="V,1:1"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@drawable/ic_search"
+                    app:tint="?attr/fg" />
+
+                <EditText
+                    android:id="@+id/searchText"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@null"
+                    android:ems="10"
+                    android:hint="@string/search_hint"
+                    android:imeOptions="actionSearch"
+                    android:inputType="textNoSuggestions|textFilter"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/searchBtn"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.cardview.widget.CardView>
     </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

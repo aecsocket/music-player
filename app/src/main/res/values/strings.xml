@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">MPlayer</string>
+    <string name="lorem_ipsum" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</string>
     <string name="notif_media">Media</string>
     <string name="notif_media_desc">Notification for media playback control</string>
     <string name="notif_error">Error</string>
@@ -27,9 +28,10 @@
     <string name="album">Album</string>
     <string name="playlist">Playlist</string>
     <string name="play_pause">Play and pause</string>
-    <string name="primary">Primary</string>
-    <string name="secondary">Secondary</string>
     <string name="navigation">Navigation</string>
+    <string name="error_info_search">Could not run search query</string>
+    <string name="error_info_art">Could not fetch art</string>
+    <string name="error_info_stream">Could not fetch stream</string>
     <string name="error_unsupported_service">This platform is unsupported.</string>
     <string name="error_age_restricted_content">This content is age restricted and cannot be streamed.</string>
     <string name="error_georestricted_content">This content is not available in your country.</string>
@@ -41,7 +43,6 @@
     <string name="error_content_not_supported">This content is not supported.</string>
     <string name="error_generic">An error occurred.</string>
     <string name="error_network">A network error occurred.</string>
-    <string name="error_notif">An error occurred, tap to see details</string>
     <string name="no_message">(no message)</string>
     <string name="unknown_time">--:--</string>
     <string name="queue">Queue</string>
@@ -52,7 +53,7 @@
     <string name="shuffle">Shuffle</string>
     <string name="art">Art</string>
     <string name="live">LIVE</string>
-    <string name="drag_to_move">Drag to move</string>
+    <string name="drag_handle">Drag to reposition</string>
     <string name="queue_add">Add to queue</string>
     <string name="queue_clear">Clear queue</string>
     <string name="queue_jump">Jump to current item</string>

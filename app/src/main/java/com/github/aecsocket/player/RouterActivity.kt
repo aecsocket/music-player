@@ -2,12 +2,11 @@ package com.github.aecsocket.player
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.github.aecsocket.player.data.DataItem
+import com.github.aecsocket.player.data.ItemData
 import com.github.aecsocket.player.error.ErrorHandler
 import com.github.aecsocket.player.error.ErrorInfo
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -42,17 +41,18 @@ class RouterActivity : AppCompatActivity() {
             lifecycleScope.launch(Dispatchers.IO + CoroutineExceptionHandler { _, ex ->
                 lifecycleScope.launch(Dispatchers.Main) {
                     val context = this@RouterActivity
-                    ErrorHandler.handle(context, ErrorInfo(ErrorHandler.getMessage(context, ex), ex))
+                    ErrorHandler.handle(context, R.string.error_info_stream, ErrorInfo(ErrorHandler.getMessage(context, ex), ex))
+                    finish()
                 }
             }) {
-                DataItem.requestStreams(url, this)?.let { streams ->
+                ItemData.requestStreams(url, this)?.let { streams ->
                     launch(Dispatchers.Main) {
-                        streams.forEach { queue.addInitial(it) }
+                        streams.forEach { queue.appendInitial(it) }
                         finish()
                     }
                 }
             }
         }
-
     }
 }
+

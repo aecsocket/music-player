@@ -1,57 +1,93 @@
 package com.github.aecsocket.player.fragment
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.SeekBar
+import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.github.aecsocket.player.*
 import com.github.aecsocket.player.databinding.FragmentNowPlayingBinding
 import com.github.aecsocket.player.media.*
-import com.google.android.exoplayer2.Player
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.util.*
 
 class NowPlayingFragment : Fragment() {
-    private lateinit var track: TextView
-    private lateinit var artist: TextView
-    private lateinit var art: ImageView
-    private lateinit var playPause: ImageButton
-    private lateinit var shuffle: ImageButton
-    private lateinit var repeat: ImageButton
-    private lateinit var seek: SeekBar
-    private lateinit var position: TextView
-    private lateinit var duration: TextView
     private var seekDragging = false
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         val binding = FragmentNowPlayingBinding.inflate(inflater, container, false)
-        val context = context ?: return binding.root
-        val player = (context.applicationContext as App).player
+        val context = requireContext()
+        val player = App.player(context)
 
-        track = binding.nowPlayingTrack
-        artist = binding.nowPlayingArtist
-        art = binding.nowPlayingArt
-        playPause = binding.nowPlayingPlayPause
-        shuffle = binding.nowPlayingShuffle
-        repeat = binding.nowPlayingRepeat
-        seek = binding.nowPlayingSeek
-        position = binding.nowPlayingPosition
-        duration = binding.nowPlayingDuration
+        setupBindings(context, player, lifecycleScope, viewLifecycleOwner,
+            binding.playingTrack, binding.playingArtist, binding.playingArt, binding.playingPlayPause, binding.playingSkipNext)
 
-        setupBasicBindings(context, player, viewLifecycleOwner,
-            track, artist, art, playPause, binding.nowPlayingSkipNext)
+        val timeDeterminate = binding.playingTimeDeterminate
+        val timeLive = binding.playingTimeLive
+        val timePosition = binding.playingTimePosition
+        val timeDuration = binding.playingTimeDuration
+        val timeSeek = binding.playingTimeSeek
 
-        binding.nowPlayingSkipPrevious.setOnClickListener { context.sendBroadcast(Intent(ACTION_SKIP_PREVIOUS)) }
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                player.stream.collect { stream ->
+                    val stream = stream ?: return@collect
+                    if (stream.type.isLive()) {
+                        timeDeterminate.visibility = View.INVISIBLE
+                        timeLive.visibility = View.VISIBLE
+                    } else {
+                        timeDeterminate.visibility = View.VISIBLE
+                        timeLive.visibility = View.INVISIBLE
+                    }
+                }
+            }
+        }
 
-        seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                player.duration.collect { duration ->
+                    timeDuration.text = if (duration < 0) getString(R.string.unknown_time)
+                    else formatTime(duration)
+                    timeSeek.max = duration.toInt()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                player.position.collect { position ->
+                    if (!seekDragging) {
+                        timeSeek.progress = position.position.toInt()
+                        timePosition.text = formatTime(position.position)
+                    }
+                    timeSeek.secondaryProgress = position.buffered.toInt()
+                }
+            }
+        }
+
+        binding.playingSkipPrevious.setOnClickListener {
+            player.restartOrSkipPrevious()
+        }
+
+        timeSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(view: SeekBar, progress: Int, fromUser: Boolean) {
                 if (!fromUser)
                     return
-                position.text = formatTime(progress.toLong())
+                timePosition.text = formatTime(progress.toLong())
             }
 
             override fun onStartTrackingTouch(view: SeekBar) {
@@ -64,54 +100,6 @@ class NowPlayingFragment : Fragment() {
             }
         })
 
-        binding.nowPlayingRepeat.setOnClickListener { player.nextRepeatMode() }
-        player.repeatMode.observe(viewLifecycleOwner) { state ->
-            binding.nowPlayingRepeat.setImageResource(when (state) {
-                Player.REPEAT_MODE_OFF -> R.drawable.ic_repeat
-                Player.REPEAT_MODE_ONE -> R.drawable.ic_repeat_one
-                Player.REPEAT_MODE_ALL -> R.drawable.ic_repeat_all
-                else -> throw IndexOutOfBoundsException()
-            })
-        }
-        binding.nowPlayingShuffle.setOnClickListener { player.toggleShuffleMode() }
-        player.shuffleMode.observe(viewLifecycleOwner) { state ->
-            binding.nowPlayingShuffle.setImageResource(
-                if (state) R.drawable.ic_shuffle_on
-                else R.drawable.ic_shuffle_off)
-        }
-
-        player.getCurrent().observe(viewLifecycleOwner) { stream ->
-            if (stream.type.isLive()) {
-                binding.nowPlayingTimeDeterminate?.visibility = View.INVISIBLE
-                binding.nowPlayingLive?.visibility = View.VISIBLE
-            } else {
-                binding.nowPlayingTimeDeterminate?.visibility = View.VISIBLE
-                binding.nowPlayingLive?.visibility = View.INVISIBLE
-            }
-        }
-
-        player.getPosition().observe(viewLifecycleOwner) { position ->
-            if (!seekDragging) {
-                seek.progress = position.toInt()
-                this.position.text = formatTime(position)
-            }
-        }
-        player.getBuffered().observe(viewLifecycleOwner) { buffered ->
-            seek.secondaryProgress = buffered.toInt()
-        }
-        player.getDuration().observe(viewLifecycleOwner) { duration ->
-            if (duration == DURATION_UNKNOWN) {
-                seek.max = 1
-                seek.progress = 0
-                seek.secondaryProgress = 0
-                this.duration.text = getString(R.string.unknown_time)
-            } else if (duration >= 0) {
-                seek.max = duration.toInt()
-                seek.keyProgressIncrement = 10_000
-                this.duration.text = formatTime(duration)
-            }
-        }
-
         return binding.root
     }
 
@@ -120,9 +108,10 @@ class NowPlayingFragment : Fragment() {
             return "%02d:%02d".format(Locale.ROOT, ms / (1000 * 60), (ms / 1000) % 60)
         }
 
-        fun setupBasicBindings(
+        fun setupBindings(
             context: Context,
             player: MediaPlayer,
+            scope: CoroutineScope,
             lifecycleOwner: LifecycleOwner,
             track: TextView,
             artist: TextView,
@@ -131,22 +120,35 @@ class NowPlayingFragment : Fragment() {
             skipNext: ImageButton
         ) {
             track.isSelected = true // enable marquee
-            skipNext.setOnClickListener { context.sendBroadcast(Intent(ACTION_SKIP_NEXT)) }
 
-            player.getCurrent().observe(lifecycleOwner) { stream ->
-                track.text = stream.getPrimaryText(context)
-                artist.text = stream.getSecondaryText(context)
-                stream.art?.let { App.setupRequest(it).into(art) }
+            skipNext.setOnClickListener {
+                player.skipNext()
             }
-            player.getState().observe(lifecycleOwner) { state ->
-                when (state) {
-                    STATE_PLAYING -> {
-                        playPause.setImageResource(R.drawable.ic_pause)
-                        playPause.setOnClickListener { context.sendBroadcast(Intent(ACTION_PAUSE)) }
+
+            scope.launch {
+                lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    player.state.collect { state ->
+                        when (state) {
+                            STATE_PAUSED -> {
+                                playPause.setImageResource(R.drawable.ic_play)
+                                playPause.setOnClickListener { player.play() }
+                            }
+                            STATE_PLAYING -> {
+                                playPause.setImageResource(R.drawable.ic_pause)
+                                playPause.setOnClickListener { player.pause() }
+                            }
+                        }
                     }
-                    STATE_PAUSED -> {
-                        playPause.setImageResource(R.drawable.ic_play)
-                        playPause.setOnClickListener { context.sendBroadcast(Intent(ACTION_PLAY)) }
+                }
+            }
+
+            scope.launch {
+                lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    player.stream.collect { stream ->
+                        val stream = stream ?: return@collect
+                        track.text = stream.primaryText(context)
+                        artist.text = stream.secondaryText(context)
+                        stream.art?.into(art)
                     }
                 }
             }

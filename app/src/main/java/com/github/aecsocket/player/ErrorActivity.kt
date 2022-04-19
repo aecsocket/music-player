@@ -1,17 +1,18 @@
-package com.github.aecsocket.player.error
+package com.github.aecsocket.player
 
 import android.os.*
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
-import com.github.aecsocket.player.R
+import com.github.aecsocket.player.databinding.ActivityErrorBinding
+import com.github.aecsocket.player.error.ErrorInfo
 
 const val ERROR_INFO = "error_info"
 
 class ErrorActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_error)
+        val binding = ActivityErrorBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, true)
 
         val error = intent.getParcelableExtra<ErrorInfo>(ERROR_INFO)
@@ -20,7 +21,7 @@ class ErrorActivity : AppCompatActivity() {
             return
         }
 
-        findViewById<TextView>(R.id.errorMessage).text = error.message ?: getString(R.string.no_message)
-        findViewById<TextView>(R.id.errorStackTrace).text = error.stackTrace
+        binding.errorMessage.text = error.message ?: getString(R.string.no_message)
+        binding.errorStackTrace.text = error.stackTrace
     }
 }

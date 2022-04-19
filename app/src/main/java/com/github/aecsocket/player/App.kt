@@ -1,13 +1,11 @@
 package com.github.aecsocket.player
 
 import android.app.Application
-import android.content.res.Resources
-import android.util.TypedValue
+import android.content.Context
+import android.view.View
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
 import com.github.aecsocket.player.media.MediaPlayer
-import com.squareup.picasso.RequestCreator
-import kotlinx.coroutines.coroutineScope
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import org.schabi.newpipe.extractor.NewPipe
@@ -88,12 +86,10 @@ class App : Application() {
     }
 
     companion object {
-        // if we ever need to add anything else here
-        fun setupRequest(req: RequestCreator) = req
+        fun player(context: Context) = (context.applicationContext as App).player
     }
 }
 
-fun Resources.Theme.resolve(resid: Int): Int? {
-    val value = TypedValue()
-    return if (resolveAttribute(resid, value, true)) value.data else null
+fun View.modPadding(left: Int? = null, top: Int? = null, right: Int? = null, bottom: Int? = null) {
+    setPadding(left ?: paddingLeft, top ?: paddingTop, right ?: paddingRight, bottom ?: paddingBottom)
 }

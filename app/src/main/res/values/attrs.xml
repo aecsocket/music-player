@@ -6,6 +6,7 @@
     <attr name="bg_alt" format="color" />
     <attr name="fg" format="color" />
     <attr name="fg_alt" format="color" />
-    <attr name="ripple" format="color" />
     <attr name="shimmer" format="color" />
+
+    <attr name="selector" format="reference" />
 </resources>

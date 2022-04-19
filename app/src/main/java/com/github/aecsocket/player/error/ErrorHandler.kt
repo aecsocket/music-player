@@ -5,14 +5,11 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.util.Log
 import android.view.View
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.Fragment
-import com.github.aecsocket.player.NOTIF_CHAN_ERROR
-import com.github.aecsocket.player.R
-import com.github.aecsocket.player.TAG
+import com.github.aecsocket.player.*
 import com.google.android.material.snackbar.Snackbar
 import org.schabi.newpipe.extractor.exceptions.*
 import java.io.IOException
@@ -45,12 +42,12 @@ object ErrorHandler {
         })
     }
 
-    fun handle(context: Context, view: View?, error: ErrorInfo) {
+    fun handle(context: Context, infoRes: Int, view: View?, error: ErrorInfo) {
         if (view == null) {
             NotificationManagerCompat.from(context)
                 .notify(NOTIF_ID, NotificationCompat.Builder(context, NOTIF_CHAN_ERROR)
                     .setSmallIcon(R.drawable.ic_bug_report)
-                    .setContentTitle(context.getString(R.string.error_notif))
+                    .setContentTitle(context.getString(infoRes))
                     .setContentText(error.message)
                     .setAutoCancel(true)
                     .setContentIntent(PendingIntent.getActivity(
@@ -60,7 +57,7 @@ object ErrorHandler {
                     .build()
                 )
         } else {
-            Snackbar.make(view, context.getString(R.string.error_generic), Snackbar.LENGTH_LONG)
+            Snackbar.make(view, context.getString(infoRes), Snackbar.LENGTH_LONG)
                 .setActionTextColor(Color.YELLOW)
                 .setAction(R.string.details) {
                     openActivity(context, error)
@@ -68,12 +65,12 @@ object ErrorHandler {
         }
     }
 
-    fun handle(fragment: Fragment, error: ErrorInfo) {
+    fun handle(fragment: Fragment, infoRes: Int, error: ErrorInfo) {
         val view = fragment.view ?: fragment.activity?.findViewById(R.id.content)
-        handle(fragment.requireContext(), view, error)
+        handle(fragment.requireContext(), infoRes, view, error)
     }
 
-    fun handle(context: Context, error: ErrorInfo) {
-        handle(context, if (context is Activity) context.findViewById<View>(R.id.content) else null, error)
+    fun handle(context: Context, infoRes: Int, error: ErrorInfo) {
+        handle(context, infoRes, if (context is Activity) context.findViewById<View>(R.id.content) else null, error)
     }
 }

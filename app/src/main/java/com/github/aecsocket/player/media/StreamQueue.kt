@@ -1,141 +1,126 @@
 package com.github.aecsocket.player.media
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.github.aecsocket.player.data.StreamData
-import java.lang.IllegalStateException
-import kotlin.math.max
-import kotlin.math.min
+import java.util.concurrent.atomic.AtomicInteger
 
-const val NOTHING_PLAYING = -1
+const val NOT_PLAYING = -1
 
 class StreamQueue {
-    data class State(val items: List<StreamData>, val index: Int)
-
-    private val empty = State(emptyList(), NOTHING_PLAYING)
-
-    private val state = MutableLiveData<State>().apply {
-        postValue(State(emptyList(), NOTHING_PLAYING))
-    }
-    private val current = MutableLiveData<StreamData?>()
-
-    fun getState(): LiveData<State> = state
-    fun getCurrent(): LiveData<StreamData?> = current
-
-    private fun stateOr(): State = state.value ?: state.value ?: empty
-
-    private fun resetPlaying() {
-        if (current.value != null) {
-            current.postValue(null)
-        }
+    interface Listener {
+        fun onSelect(from: Int, to: Int) {}
+        fun onAppend(index: Int, size: Int) {}
+        fun onRemove(index: Int) {}
+        fun onMove(from: Int, to: Int) {}
+        fun onClear(size: Int) {}
     }
 
-    fun setIndex(index: Int) {
-        val cur = stateOr()
-        if (cur.items.isEmpty())
-            return
-        val mIndex = max(0, min(cur.items.size - 1, index))
-        state.postValue(State(cur.items, mIndex))
-        current.postValue(cur.items[mIndex])
-    }
+    private val items = ArrayList<StreamData>()
+    private val index = AtomicInteger(-1)
+    private val listeners = ArrayList<Listener>()
 
-    fun offsetIndex(offset: Int) {
-        val cur = stateOr()
-        val index = cur.index + offset
-        val size = cur.items.size
-        setIndex(if (index >= size) 0 else if (index < 0) size - 1 else index)
-    }
+    fun getItems() = items.toList()
+    fun getIndex() = index.get()
 
-    fun resetIndex() {
-        val cur = stateOr()
-        state.postValue(State(cur.items, NOTHING_PLAYING))
-        resetPlaying()
-    }
+    fun addListener(listener: Listener) = listeners.add(listener)
+    fun removeListener(listener: Listener) = listeners.remove(listener)
 
-    fun indexOf(stream: StreamData): Int? {
-        (state.value ?: return null).items.forEachIndexed { index, other ->
-            if (other.isSame(stream))
+    fun getSize() = items.size
+
+    operator fun get(index: Int) = items[index]
+
+    fun getOr(index: Int) = if (index < 0 || index >= items.size) null else items[index]
+
+    fun indexOf(elem: StreamData): Int? {
+        items.forEachIndexed { index, other ->
+            if (other.same(elem))
                 return index
         }
         return null
     }
 
-    private fun post(mapper: (State) -> State) {
-        val cur = stateOr()
-        val mapped = mapper(cur)
-        val next = State(mapped.items, if (mapped.items.isEmpty()) NOTHING_PLAYING else mapped.index)
-        // TODO: this is unsafe and whatever cause if [a, b] and [a, c] then not [a, b, c].
-        // Cry.
-        //state.postValue(next)
-        state.value = next
+    fun contains(elem: StreamData) = indexOf(elem) != null
 
-        fun <T> safeGet(index: Int, list: List<T>): T? =
-            if (index < 0) null else if (index >= list.size) null else list[index]
-
-        val curStream = current.value
-        val nextStream = safeGet(next.index, next.items)
-        if (next.items.isEmpty()) {
-            resetPlaying()
-        } else if (curStream != null && nextStream != null && (curStream.id != nextStream.id)) {
-            // we just switched to a new stream
-            current.postValue(next.items[next.index])
-        }
+    fun setIndex(index: Int) {
+        if (index != NOT_PLAYING && (index < 0 || index >= items.size))
+            throw IndexOutOfBoundsException()
+        val cur = this.index.get()
+        if (index == cur)
+            return
+        this.index.set(index)
+        listeners.forEach { it.onSelect(cur, index) }
     }
 
-    fun add(element: StreamData): Int {
-        indexOf(element)?.let { return it }
-        var index: Int? = null
-        post {
-            index = it.index + 1
-            State(
-                it.items.toMutableList().apply { add(element) },
-                it.index
-            )
+    fun offsetIndex(offset: Int) {
+        val index = this.index.get() + offset
+        setIndex(if (index >= items.size) 0 else if (index < 0) items.size - 1 else index)
+    }
+
+    fun resetIndex() {
+        setIndex(0)
+    }
+
+
+    private fun forceAppend(elems: Collection<StreamData>): Int {
+        val from = items.size
+        if (elems.isEmpty())
+            return from
+        items.addAll(elems)
+        listeners.forEach { it.onAppend(from, elems.size) }
+        return from
+    }
+
+    fun append(elems: Collection<StreamData>): Int {
+        val added = elems.filter { indexOf(it) == null }
+        return forceAppend(added)
+    }
+
+    fun append(elem: StreamData): Int {
+        return append(setOf(elem))
+    }
+
+    fun appendPlay(elem: StreamData) {
+        indexOf(elem)?.let {
+            setIndex(it)
+        } ?: setIndex(forceAppend(setOf(elem)))
+    }
+
+    fun appendInitial(elem: StreamData) {
+        if (index.get() == NOT_PLAYING) {
+            appendPlay(elem)
+        } else {
+            append(elem)
         }
-        return index ?: throw IllegalStateException("added element without index")
     }
 
     fun remove(index: Int) {
-        post { State(
-            it.items.toMutableList().apply { removeAt(index) },
-            if (
-                it.index > index // if it is at or above the item we just removed
-                || it.index == it.items.size - 1 // if it is the last item
-            ) it.index - 1
-            else it.index
-        ) }
+        val size = items.size
+        items.removeAt(index)
+
+        val cur = this.index.get()
+        if (cur == size - 1 || cur > index)
+            setIndex(cur - 1)
+        listeners.forEach { it.onRemove(index) }
     }
 
-    fun remove(element: StreamData) {
-        indexOf(element)?.let { remove(it) }
+    fun remove(elem: StreamData) {
+        indexOf(elem)?.let { remove(it) }
     }
 
     fun move(from: Int, to: Int) {
-        post { State(
-            it.items.toMutableList().apply {
-                add(to, removeAt(from))
-            },
-            if (from == it.index) to
-            else if (it.index in (from + 1)..to) it.index - 1
-            else if (it.index in to until from) it.index + 1
-            else it.index
-        ) }
+        items.add(to, items.removeAt(from))
+        listeners.forEach { it.onMove(from, to) }
+
+        val cur = index.get()
+        this.index.set(if (from == cur) to
+        else if (cur in (from + 1)..to) cur - 1
+        else if (cur in to until from) cur + 1
+        else cur)
     }
 
     fun clear() {
-        post { State(emptyList(), NOTHING_PLAYING) }
-    }
-
-    fun addOrSelect(element: StreamData) {
-        setIndex(indexOf(element) ?: add(element))
-    }
-
-    fun addInitial(element: StreamData) {
-        val state = stateOr()
-        if (state.index == NOTHING_PLAYING) {
-            addOrSelect(element)
-        } else {
-            add(element)
-        }
+        val size = items.size
+        items.clear()
+        listeners.forEach { it.onClear(size) }
+        this.setIndex(NOT_PLAYING)
     }
 }

@@ -1,84 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    style="@style/Background"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/view"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?attr/bg">
 
     <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/contentPager"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:clickable="false"
-        app:layout_constraintBottom_toBottomOf="@+id/mediaBarCoordinator"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
-        android:id="@+id/mediaBarCoordinator"
+        android:id="@+id/viewPager"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@+id/navTabs"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/mediaCoordinator"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/media_bar_height"
+        app:layout_constraintBottom_toTopOf="@+id/navTabs"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
             android:id="@+id/mediaSheet"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?attr/bg"
+            android:layout_height="match_parent"
+            android:background="?attr/bg_alt"
+            android:elevation="8dp"
+            android:orientation="vertical"
             app:behavior_hideable="true"
             app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/sheetBar"
+                android:id="@+id/mediaBar"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/sheet_bar_height"
-                android:background="?attr/bg_alt"
+                android:layout_height="@dimen/media_bar_height"
+                app:layout_constraintBottom_toTopOf="@+id/navTabs"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <FrameLayout
-                    android:id="@+id/mediaPositionContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="2dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent">
-
-                    <ProgressBar
-                        android:id="@+id/mediaPosition"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:indeterminate="false"
-                        android:progressBackgroundTint="?attr/bg_alt"
-                        android:progressTint="?attr/fg"
-                        android:scaleY="10" />
-
-                    <FrameLayout
-                        android:id="@+id/mediaLive"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@color/live">
-
-                    </FrameLayout>
-                </FrameLayout>
+                app:layout_constraintStart_toStartOf="parent">
 
                 <androidx.cardview.widget.CardView
-                    android:id="@+id/mediaArtContainer"
+                    android:id="@+id/mediaArtHold"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:layout_marginStart="12dp"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginBottom="6dp"
-                    app:cardCornerRadius="3dp"
-                    app:layout_constraintBottom_toTopOf="@+id/mediaPositionContainer"
-                    app:layout_constraintDimensionRatio="H,1:1"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp"
+                    app:layout_constraintBottom_toTopOf="@+id/mediaPositionHold"
+                    app:layout_constraintDimensionRatio="V,1:1"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
 
@@ -86,8 +58,8 @@
                         android:id="@+id/mediaArt"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:adjustViewBounds="true"
-                        android:contentDescription="@string/album"
+                        android:background="?attr/bg"
+                        android:contentDescription="@string/art"
                         android:scaleType="centerCrop" />
                 </androidx.cardview.widget.CardView>
 
@@ -96,118 +68,123 @@
                     android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:layout_marginStart="8dp"
-                    android:layout_marginEnd="8dp"
                     android:ellipsize="marquee"
                     android:gravity="bottom"
-                    android:marqueeRepeatLimit="marquee_forever"
-                    android:scrollHorizontally="true"
                     android:singleLine="true"
-                    android:text="@string/track"
+                    android:text="@string/lorem_ipsum"
                     android:textColor="?attr/fg"
-                    android:textSize="@dimen/text_size"
-                    android:textStyle="bold"
                     app:layout_constraintBottom_toTopOf="@+id/mediaArtist"
                     app:layout_constraintEnd_toStartOf="@+id/mediaPlayPause"
-                    app:layout_constraintStart_toEndOf="@+id/mediaArtContainer"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintStart_toEndOf="@+id/mediaArtHold"
+                    app:layout_constraintTop_toTopOf="@+id/mediaArtHold" />
 
                 <TextView
                     android:id="@+id/mediaArtist"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:ellipsize="marquee"
                     android:gravity="top"
                     android:singleLine="true"
-                    android:text="@string/artist"
+                    android:text="@string/lorem_ipsum"
                     android:textColor="?attr/fg_alt"
-                    android:textSize="@dimen/text_size"
-                    app:layout_constraintBottom_toTopOf="@+id/mediaPositionContainer"
+                    app:layout_constraintBottom_toBottomOf="@+id/mediaArtHold"
                     app:layout_constraintEnd_toEndOf="@+id/mediaTrack"
+                    app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toStartOf="@+id/mediaTrack"
                     app:layout_constraintTop_toBottomOf="@+id/mediaTrack" />
 
                 <ImageButton
                     android:id="@+id/mediaPlayPause"
-                    style="@style/ImageButton.Bounded"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
+                    android:background="?android:selectableItemBackground"
                     android:contentDescription="@string/play_pause"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp"
                     android:scaleType="fitCenter"
-                    app:layout_constraintBottom_toTopOf="@+id/mediaPositionContainer"
+                    app:layout_constraintBottom_toTopOf="@+id/mediaPositionHold"
                     app:layout_constraintEnd_toStartOf="@+id/mediaSkipNext"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintVertical_bias="0.0"
                     app:srcCompat="@drawable/ic_play"
                     app:tint="?attr/fg" />
 
                 <ImageButton
                     android:id="@+id/mediaSkipNext"
-                    style="@style/ImageButton.Bounded"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
+                    android:background="?android:selectableItemBackground"
                     android:contentDescription="@string/skip_next"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp"
                     android:scaleType="fitCenter"
-                    app:layout_constraintBottom_toBottomOf="@+id/mediaPlayPause"
+                    app:layout_constraintBottom_toTopOf="@+id/mediaPositionHold"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="@+id/mediaPlayPause"
-                    app:layout_constraintVertical_bias="0.0"
+                    app:layout_constraintTop_toTopOf="parent"
                     app:srcCompat="@drawable/ic_skip_next"
                     app:tint="?attr/fg" />
 
+                <FrameLayout
+                    android:id="@+id/mediaPositionHold"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent">
+
+                    <ProgressBar
+                        android:id="@+id/mediaPositionDeterminate"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:progressBackgroundTint="?attr/bg_alt"
+                        android:progressTint="?attr/fg"
+                        android:scaleY="1024" />
+
+                    <FrameLayout
+                        android:id="@+id/mediaPositionLive"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/live_bg">
+
+                    </FrameLayout>
+                </FrameLayout>
+
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/sheetContent"
+            <LinearLayout
+                android:id="@+id/mediaContent"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/bg"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/sheetBar">
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
                 <com.google.android.material.tabs.TabLayout
-                    android:id="@+id/sheetTabs"
-                    android:layout_width="0dp"
+                    android:id="@+id/mediaTabs"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
                     app:tabIndicatorColor="?attr/accent"
-                    app:tabIndicatorGravity="top"
                     app:tabSelectedTextColor="?attr/fg"
                     app:tabTextColor="?attr/fg_alt" />
 
                 <androidx.viewpager2.widget.ViewPager2
-                    android:id="@+id/sheetPager"
-                    android:layout_width="0dp"
-                    android:layout_height="400dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/sheetTabs" />
+                    android:id="@+id/mediaPager"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+            </LinearLayout>
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/navTabs"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:background="?attr/bg_alt"
-        android:contentDescription="@string/navigation"
+        android:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:tabIconTint="?attr/fg"
-        app:tabIndicatorColor="?attr/accent"
-        app:tabIndicatorFullWidth="true"
-        app:tabIndicatorGravity="top"
-        app:tabTextColor="?attr/fg" />
+        app:tabIndicatorColor="?attr/accent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

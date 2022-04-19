@@ -10,17 +10,22 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Binder
 import android.util.Log
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.github.aecsocket.player.data.StreamData
+import com.github.aecsocket.player.error.ErrorHandler
+import com.github.aecsocket.player.error.ErrorInfo
 import com.github.aecsocket.player.media.MediaPlayer
 import com.github.aecsocket.player.media.STATE_BUFFERING
 import com.github.aecsocket.player.media.STATE_PAUSED
 import com.github.aecsocket.player.media.STATE_PLAYING
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
+import kotlinx.coroutines.launch
 import java.lang.Exception
 import java.lang.IllegalStateException
 
@@ -38,27 +43,27 @@ class MediaService : LifecycleService() {
     private var art: Bitmap? = null
     private var artTarget: Target? = null
 
-    private fun getStream() = player.getCurrent().value
-        ?: throw IllegalStateException("using media service with no stream running")
+    private fun getStream() = player.stream.value
+        ?: throw IllegalStateException("using MediaService with no stream")
 
     override fun onCreate() {
         super.onCreate()
         player = (application as App).player
-        val stream = getStream()
-        player.getCurrent().observe(this) { updateStream(it) }
-        player.getState().observe(this) { updateState() }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) { player.state.collect { updateState(it) } }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) { player.stream.collect { updateStream(it) } }
+        }
 
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                val streamNow = getStream()
-                // TODO: Action media buttons dont actually update the notif
-                // Cause #handleBroadcast updates the playback status
-                // off this thread, so updateNotif -> actual playback pause
-                // Fix pls
                 player.handleBroadcast(intent)
-                if (player.handle != null) {
-                    updateNotif(streamNow)
-                }
+                // if we've just released the player, conn is now null
+                if (player.conn != null)
+                    updateNotif(getStream())
             }
         }
         registerReceiver(receiver, IntentFilter().apply {
@@ -71,7 +76,7 @@ class MediaService : LifecycleService() {
             addAction(ACTION_STOP)
         })
 
-        startForeground(NOTIF_ID, createNotif(stream))
+        startForeground(NOTIF_ID, createNotif(getStream()))
         Log.d(TAG, "Service started")
     }
 
@@ -88,7 +93,7 @@ class MediaService : LifecycleService() {
     }
 
     private fun createNotif(stream: StreamData): Notification {
-        val playerHandle = player.handle ?: throw IllegalStateException("using media service with no player")
+        val conn = player.conn ?: throw IllegalStateException("using media service with no player")
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         val builder = NotificationCompat.Builder(this, NOTIF_CHAN_MEDIA)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -103,7 +108,7 @@ class MediaService : LifecycleService() {
             .setContentIntent(PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), flags))
             .addAction(R.drawable.ic_skip_previous, getString(R.string.skip_previous),
                 PendingIntent.getBroadcast(this, 0, Intent(ACTION_SKIP_PREVIOUS), flags))
-        when (player.getState().value) {
+        when (player.state.value) {
             STATE_PAUSED -> builder.addAction(R.drawable.ic_play, getString(R.string.play),
                 PendingIntent.getBroadcast(this, 0, Intent(ACTION_PLAY), flags))
             STATE_PLAYING -> builder.addAction(R.drawable.ic_pause, getString(R.string.pause),
@@ -116,7 +121,7 @@ class MediaService : LifecycleService() {
             .addAction(R.drawable.ic_stop, getString(R.string.stop),
                 PendingIntent.getBroadcast(this, 0, Intent(ACTION_STOP), flags))
             .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
-                .setMediaSession(playerHandle.session.sessionToken)
+                .setMediaSession(conn.session.sessionToken)
                 .setShowActionsInCompactView(1, 2))
             .build()
     }
@@ -125,7 +130,8 @@ class MediaService : LifecycleService() {
         NotificationManagerCompat.from(this).notify(NOTIF_ID, createNotif(stream))
     }
 
-    private fun updateStream(stream: StreamData) {
+    private fun updateStream(stream: StreamData?) {
+        val stream = stream ?: return
         stream.art?.let { art ->
             artTarget?.let { Picasso.get().cancelRequest(it) }
             val artTarget = object : Target {
@@ -134,25 +140,21 @@ class MediaService : LifecycleService() {
                     updateNotif(stream)
                 }
 
-                override fun onBitmapFailed(ex: Exception, error: Drawable?) {
-                    // TODO snackbar
-                    // TODO set art
-                    this@MediaService.art = null
-                    Toast.makeText(this@MediaService,
-                        "Error getting image: $ex",
-                        Toast.LENGTH_SHORT).show()
+                override fun onBitmapFailed(ex: Exception, placeholder: Drawable?) {
+                    val context = applicationContext
+                    ErrorHandler.handle(context, R.string.error_info_art, ErrorInfo(context, ex))
                     updateNotif(stream)
                 }
 
                 override fun onPrepareLoad(placeHolderDrawable: Drawable?) {}
             }
             this.artTarget = artTarget
-            App.setupRequest(art).into(artTarget)
+            art.into(artTarget)
             updateNotif(stream)
         }
     }
 
-    private fun updateState() {
+    private fun updateState(state: Int) {
         updateNotif(getStream())
     }
 
