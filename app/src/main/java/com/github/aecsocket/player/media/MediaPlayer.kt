@@ -213,7 +213,7 @@ class MediaPlayer(
                         val source = stream.makeSource(resolver)
                         withContext(Dispatchers.Main) {
                             _stream.value = source
-                            conn.exo.addMediaSource(source.source)
+                            conn.exo.setMediaSource(source.source)
                             conn.exo.prepare()
                         }
                     } catch (ex: Exception) {
@@ -263,7 +263,6 @@ class MediaPlayer(
     }
 
     fun skipNext() {
-        IllegalStateException("SKIP NEXT").printStackTrace()
         queue.offsetIndex(1)
     }
 

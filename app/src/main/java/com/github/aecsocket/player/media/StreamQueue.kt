@@ -44,8 +44,6 @@ class StreamQueue {
         if (index != NOT_PLAYING && (index < 0 || index >= items.size))
             throw IndexOutOfBoundsException()
         val cur = this.index.get()
-        if (index == cur)
-            return
         this.index.set(index)
         listeners.forEach { it.onSelect(cur, index) }
     }
@@ -56,7 +54,7 @@ class StreamQueue {
     }
 
     fun resetIndex() {
-        setIndex(0)
+        setIndex(NOT_PLAYING)
     }
 
 
@@ -99,6 +97,8 @@ class StreamQueue {
         val cur = this.index.get()
         if (cur == size - 1 || cur > index)
             setIndex(cur - 1)
+        else if (cur == index)
+            setIndex(cur)
         listeners.forEach { it.onRemove(index) }
     }
 
@@ -121,6 +121,6 @@ class StreamQueue {
         val size = items.size
         items.clear()
         listeners.forEach { it.onClear(size) }
-        this.setIndex(NOT_PLAYING)
+        resetIndex()
     }
 }

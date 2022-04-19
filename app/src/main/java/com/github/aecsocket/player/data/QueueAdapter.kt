@@ -41,8 +41,12 @@ class QueueAdapter(
                 false
             }
 
-            base.setOnClickListener {
-                player.queue.setIndex(layoutPosition)
+            if (selected) {
+                base.setOnClickListener(null)
+            } else {
+                base.setOnClickListener {
+                    player.queue.setIndex(layoutPosition)
+                }
             }
         }
 

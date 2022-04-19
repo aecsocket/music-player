@@ -15,6 +15,7 @@
         <item name="colorError">#f44336</item>
         <item name="colorOnError">#ffffff</item>
 
+        <item name="android:statusBarColor">?attr/colorPrimary</item>
         <item name="android:navigationBarColor">?attr/colorSurface</item>
     </style>
 
