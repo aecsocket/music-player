@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.lang.Exception
-import java.lang.IllegalStateException
 
 const val STATE_PAUSED = 0
 const val STATE_PLAYING = 1
@@ -210,7 +209,7 @@ class MediaPlayer(
 
                 scope.launch(Dispatchers.IO) {
                     try {
-                        val source = stream.makeSource(resolver)
+                        val source = stream.fetchSource(resolver)
                         withContext(Dispatchers.Main) {
                             _stream.value = source
                             conn.exo.setMediaSource(source.source)

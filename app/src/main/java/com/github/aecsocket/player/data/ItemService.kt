@@ -25,12 +25,12 @@ interface ItemService {
     suspend fun fetchSearch(query: String): List<ItemData>
 
     companion object {
-        val NEWPIPE = ServiceList.all().associateWith { NewPipeItemService(it) }
+        val NEWPIPE = ServiceList.all().associateWith { NewPipeItemService(it, LIST_TYPE_PLAYLIST) }
 
         val ALL = listOf(
             LocalItemService,
-            NewPipeItemService(ServiceList.YouTube, R.string.yt_music,
-                listOf("music_songs", "music_albums", "music_artists")),
+            NewPipeItemService(ServiceList.YouTube, LIST_TYPE_ALBUM, R.string.yt_music,
+                listOf("music_songs", "music_playlists", "music_albums", "music_artists")),
             SpotifyItemService
         ) + NEWPIPE.values
 
@@ -69,6 +69,7 @@ object SpotifyItemService : ItemService {
 
 class NewPipeItemService(
     val handle: StreamingService,
+    val listType: Int,
     val nameId: Int? = null,
     val filters: List<String> = emptyList()
 ) : ItemService {
@@ -114,7 +115,7 @@ class NewPipeItemService(
                     name = it.name,
                     art = Picasso.get().load(it.thumbnailUrl)
                 )
-                is PlaylistInfoItem -> null
+                is PlaylistInfoItem -> it.asData(handle, listType)
                 else -> null
             }
         }

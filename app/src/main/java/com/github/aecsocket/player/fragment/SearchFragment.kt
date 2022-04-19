@@ -108,7 +108,7 @@ class SearchFragment : Fragment() {
             return@setOnEditorActionListener false
         }
 
-        adapter = ItemDataAdapter(player.queue)
+        adapter = ItemDataAdapter(player.queue, lifecycleScope)
         searchResults.adapter = adapter
 
         lifecycleScope.launch {

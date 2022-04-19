@@ -12,10 +12,15 @@ import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.playlist.PlaylistInfo
+import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
+import java.lang.IllegalStateException
 import java.util.concurrent.atomic.AtomicLong
+
+const val LIST_TYPE_ALBUM = 0
+const val LIST_TYPE_PLAYLIST = 1
 
 sealed interface ItemData {
     val id: Long
@@ -35,6 +40,33 @@ sealed interface ItemData {
             override fun areContentsTheSame(oldItem: T, newItem: T) = oldItem.same(newItem)
         }
 
+        suspend fun listToStreams(
+            service: StreamingService,
+            original: PlaylistInfo,
+            scope: CoroutineScope
+        ): List<StreamData> {
+            var playlist: PlaylistInfo? = original
+            val streams = Array<StreamData?>(original.streamCount.toInt()) { null }
+            val jobs = ArrayList<Job>()
+            var idx = 0
+            while (playlist != null) {
+                original.relatedItems.forEach { elem ->
+                    val i = idx
+                    jobs.add(scope.launch(Dispatchers.IO) {
+                        streams[i] = elem.asData(service)
+                    })
+                    idx++
+                }
+                playlist =
+                    if (original.hasNextPage()) PlaylistInfo.getInfo(original.nextPage.url)
+                    else null
+            }
+            jobs.joinAll()
+            // if we failed to get some entries, they'll stay null - just filter them out
+            // TODO maybe log these errors
+            return streams.filterNotNull()
+        }
+
         suspend fun requestStreams(
             url: String,
             service: StreamingService,
@@ -42,29 +74,7 @@ sealed interface ItemData {
         ): List<StreamData>? {
             return when (service.getLinkTypeByUrl(url)) {
                 StreamingService.LinkType.STREAM -> listOf(StreamInfo.getInfo(service, url).asData(service))
-                StreamingService.LinkType.PLAYLIST -> {
-                    var playlist = PlaylistInfo.getInfo(service, url)
-                    // keep it ordered by using an array
-                    val streams = Array<StreamData?>(playlist.streamCount.toInt()) { null }
-                    val jobs = ArrayList<Job>()
-                    var idx = 0
-                    while (playlist != null) {
-                        playlist.relatedItems.forEach { elem ->
-                            val i = idx
-                            jobs.add(scope.launch(Dispatchers.IO) {
-                                streams[i] = elem.asData(service)
-                            })
-                            idx++
-                        }
-                        playlist =
-                            if (playlist.hasNextPage()) PlaylistInfo.getInfo(playlist.nextPage.url)
-                            else null
-                    }
-                    jobs.joinAll()
-                    // if we failed to get some entries, they'll stay null - just filter them out
-                    // TODO maybe log these errors
-                    streams.filterNotNull()
-                }
+                StreamingService.LinkType.PLAYLIST -> listToStreams(service, PlaylistInfo.getInfo(service, url), scope)
                 else -> null
             }
         }
@@ -87,7 +97,7 @@ interface StreamData : ItemData {
     override fun primaryText(context: Context) = name
     override fun secondaryText(context: Context) = artist ?: context.getString(R.string.unknown_artist)
 
-    fun makeSource(resolver: SourceResolver): LoadedStreamData
+    fun fetchSource(resolver: SourceResolver): LoadedStreamData
 }
 
 data class ServiceStreamData(
@@ -103,7 +113,7 @@ data class ServiceStreamData(
     override fun same(other: ItemData) =
         super.same(other) || other is ServiceStreamData && url == other.url
 
-    override fun makeSource(resolver: SourceResolver) =
+    override fun fetchSource(resolver: SourceResolver) =
         resolver.resolve(this, StreamInfo.getInfo(service, url))
 }
 
@@ -120,6 +130,36 @@ data class RemoteArtistData(
     override val art: RequestCreator? = null
 ) : ArtistData
 
+interface StreamListData : ItemData {
+    val name: String
+    val creator: String?
+    val size: Long
+
+    suspend fun fetchStreams(scope: CoroutineScope): List<StreamData>
+}
+
+data class ServiceStreamListData(
+    override val id: Long = ItemData.nextId(),
+    override val name: String,
+    override val creator: String? = null,
+    override val art: RequestCreator? = null,
+    override val size: Long,
+
+    val listType: Int,
+    val service: StreamingService,
+    val url: String
+) : StreamListData {
+    override fun primaryText(context: Context) = name
+    override fun secondaryText(context: Context) = context.getString(when (listType) {
+        LIST_TYPE_ALBUM -> R.string.album_info
+        LIST_TYPE_PLAYLIST -> R.string.playlist_info
+        else -> throw IllegalStateException("unknown stream list type $listType")
+    }, size, creator)
+
+    override suspend fun fetchStreams(scope: CoroutineScope) =
+        ItemData.listToStreams(service, PlaylistInfo.getInfo(service, url), scope)
+}
+
 fun StreamInfo.asData(service: StreamingService) =
     ServiceStreamData(
         name = name,
@@ -135,5 +175,25 @@ fun StreamInfoItem.asData(service: StreamingService) =
         artist = uploaderName,
         art = Picasso.get().load(thumbnailUrl),
         type = streamType,
+        service = service,
+        url = url)
+
+fun PlaylistInfo.asData(service: StreamingService, listType: Int) =
+    ServiceStreamListData(
+        name = name,
+        creator = uploaderName,
+        art = Picasso.get().load(thumbnailUrl),
+        size = streamCount,
+        listType = listType,
+        service = service,
+        url = url)
+
+fun PlaylistInfoItem.asData(service: StreamingService, listType: Int) =
+    ServiceStreamListData(
+        name = name,
+        creator = uploaderName,
+        art = Picasso.get().load(thumbnailUrl),
+        size = streamCount,
+        listType = listType,
         service = service,
         url = url)
