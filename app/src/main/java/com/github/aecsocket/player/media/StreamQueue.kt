@@ -48,9 +48,17 @@ class StreamQueue {
         listeners.forEach { it.onSelect(cur, index) }
     }
 
+    fun safeSetIndex(index: Int) {
+        if (index < 0 || index >= items.size)
+            return
+        setIndex(index)
+    }
+
     fun offsetIndex(offset: Int) {
         val index = this.index.get() + offset
-        setIndex(if (index >= items.size) 0 else if (index < 0) items.size - 1 else index)
+        // we *don't* wrap around here
+        // TODO maybe some users will want the queue to wrap?
+        safeSetIndex(index)
     }
 
     fun resetIndex() {

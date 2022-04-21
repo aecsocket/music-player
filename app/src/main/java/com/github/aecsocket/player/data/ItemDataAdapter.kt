@@ -69,6 +69,8 @@ class ItemDataAdapter(
 
             base.setOnClickListener {
                 player.queue.appendPlay(item)
+                player.seekToDefault()
+                player.play()
             }
             add.setOnClickListener {
                 player.queue.append(item)

@@ -3,8 +3,11 @@ package com.github.aecsocket.player.media
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.ResultReceiver
+import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.media.AudioAttributesCompat
@@ -16,6 +19,7 @@ import com.github.aecsocket.player.error.ErrorHandler
 import com.github.aecsocket.player.error.ErrorInfo
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 import com.squareup.picasso.RequestCreator
@@ -88,76 +92,7 @@ class MediaPlayer(
     private fun abandonAudioFocus() = AudioManagerCompat.abandonAudioFocusRequest(audioManager, focusRequest)
 
     fun requireConn(): PlayerConnection {
-        return conn ?: PlayerConnection(context) { conn ->
-            object : Player.Listener {
-                fun playOrPaused(playWhenReady: Boolean) =
-                    if (playWhenReady) STATE_PLAYING else STATE_PAUSED
-
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    when (playbackState) {
-                        Player.STATE_IDLE, Player.STATE_BUFFERING -> _state.value = STATE_BUFFERING
-                        Player.STATE_READY -> {
-                            requestAudioFocus()
-                            _state.value = playOrPaused(conn.exo.playWhenReady)
-                            _duration.value = conn.exo.duration
-                        }
-                        Player.STATE_ENDED -> {
-                            // if we've just cleared all media items
-                            // (we're about to buffer the next item)
-                            if (_state.value == STATE_BUFFERING)
-                                return
-                            skipNext()
-                        }
-                    }
-                }
-
-                override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                    if (playWhenReady) {
-                        requestAudioFocus()
-                        _state.value = STATE_PLAYING
-                        if (_stream.value?.data?.type?.isLive() == true) {
-                            conn.exo.seekToDefaultPosition()
-                        }
-                    } else {
-                        abandonAudioFocus()
-                        _state.value = STATE_PAUSED
-                    }
-                }
-
-                // NewPipe: player/Player.java
-                override fun onPlayerError(ex: PlaybackException) {
-                    val exo = conn.exo
-                    Log.w(TAG, "Playback error", ex)
-                    when (ex.errorCode) {
-                        PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
-                            exo.seekToDefaultPosition()
-                            exo.prepare()
-                        }
-                        PlaybackException.ERROR_CODE_IO_INVALID_HTTP_CONTENT_TYPE,
-                        PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
-                        PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND,
-                        PlaybackException.ERROR_CODE_IO_NO_PERMISSION,
-                        PlaybackException.ERROR_CODE_IO_CLEARTEXT_NOT_PERMITTED,
-                        PlaybackException.ERROR_CODE_IO_READ_POSITION_OUT_OF_RANGE,
-                        PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
-                        PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
-                        PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
-                        PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED -> {
-                            // TODO exception handler here
-                            skipNext()
-                        }
-                        PlaybackException.ERROR_CODE_TIMEOUT,
-                        PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
-                        PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
-                        PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT,
-                        PlaybackException.ERROR_CODE_UNSPECIFIED -> {
-                            exo.prepare()
-                        }
-                        else -> release()
-                    }
-                }
-            }
-        }.also { conn ->
+        return conn ?: PlayerConnection(context, { exoListener(it) }, { queueNavigator(it) }).also { conn ->
             this.conn = conn
             postUpdatePosition()
             ContextCompat.startForegroundService(context, Intent(context, MediaService::class.java))
@@ -198,9 +133,7 @@ class MediaPlayer(
             _stream.value = stream
             release()
         } else {
-            if (_stream.value?.data?.same(stream) == true) {
-                seekToDefault()
-            } else {
+            if (_stream.value?.data?.same(stream) != true) {
                 _stream.value = LoadingStreamData(stream, stream.art)
                 _duration.value = DURATION_UNKNOWN
                 _state.value = STATE_BUFFERING
@@ -223,6 +156,98 @@ class MediaPlayer(
                 }
             }
         }
+    }
+
+    private fun exoListener(conn: PlayerConnection) = object : Player.Listener {
+        fun playOrPaused(playWhenReady: Boolean) =
+            if (playWhenReady) STATE_PLAYING else STATE_PAUSED
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            when (playbackState) {
+                Player.STATE_IDLE, Player.STATE_BUFFERING -> _state.value = STATE_BUFFERING
+                Player.STATE_READY -> {
+                    requestAudioFocus()
+                    _state.value = playOrPaused(conn.exo.playWhenReady)
+                    _duration.value = conn.exo.duration
+                }
+                Player.STATE_ENDED -> {
+                    // if we've just cleared all media items
+                    // (we're about to buffer the next item)
+                    if (_state.value == STATE_BUFFERING)
+                        return
+                    skipNext()
+                }
+            }
+        }
+
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            if (playWhenReady) {
+                requestAudioFocus()
+                _state.value = STATE_PLAYING
+                if (_stream.value?.data?.type?.isLive() == true) {
+                    conn.exo.seekToDefaultPosition()
+                }
+            } else {
+                abandonAudioFocus()
+                _state.value = STATE_PAUSED
+            }
+        }
+
+        // NewPipe: player/Player.java
+        override fun onPlayerError(ex: PlaybackException) {
+            val exo = conn.exo
+            Log.w(TAG, "Playback error", ex)
+            when (ex.errorCode) {
+                PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
+                    exo.seekToDefaultPosition()
+                    exo.prepare()
+                }
+                PlaybackException.ERROR_CODE_IO_INVALID_HTTP_CONTENT_TYPE,
+                PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
+                PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND,
+                PlaybackException.ERROR_CODE_IO_NO_PERMISSION,
+                PlaybackException.ERROR_CODE_IO_CLEARTEXT_NOT_PERMITTED,
+                PlaybackException.ERROR_CODE_IO_READ_POSITION_OUT_OF_RANGE,
+                PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
+                PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
+                PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
+                PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED -> {
+                    // TODO exception handler here
+                    skipNext()
+                }
+                PlaybackException.ERROR_CODE_TIMEOUT,
+                PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT,
+                PlaybackException.ERROR_CODE_UNSPECIFIED -> {
+                    exo.prepare()
+                }
+                else -> release()
+            }
+        }
+    }
+
+    private fun queueNavigator(conn: PlayerConnection) = object : MediaSessionConnector.QueueNavigator {
+        override fun getSupportedQueueNavigatorActions(player: Player) =
+            PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
+            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
+            PlaybackStateCompat.ACTION_SKIP_TO_QUEUE_ITEM
+
+        override fun onTimelineChanged(player: Player) {}
+        override fun onCurrentMediaItemIndexChanged(player: Player) {}
+        override fun getActiveQueueItemId(player: Player?) =
+            queue.getIndex().toLong()
+        override fun onSkipToPrevious(player: Player) = skipPrevious()
+        override fun onSkipToQueueItem(player: Player, id: Long) =
+            queue.safeSetIndex(id.toInt())
+        override fun onSkipToNext(player: Player) = skipNext()
+
+        override fun onCommand(
+            player: Player,
+            command: String,
+            extras: Bundle?,
+            cb: ResultReceiver?
+        ) = false
     }
 
     private fun postUpdatePosition() {
@@ -261,12 +286,17 @@ class MediaPlayer(
         conn.exo.pause()
     }
 
+    // explicit transport actions will start playback
+    // BUT if e.g. an item is removed from queue, and a new stream is queued
+    // the playback state will NOT change
     fun skipNext() {
         queue.offsetIndex(1)
+        play()
     }
 
     fun skipPrevious() {
         queue.offsetIndex(-1)
+        play()
     }
 
     fun restartOrSkipPrevious() {

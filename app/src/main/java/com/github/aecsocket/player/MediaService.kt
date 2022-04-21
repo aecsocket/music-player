@@ -56,14 +56,18 @@ class MediaService : LifecycleService() {
 
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                player.handleBroadcast(intent)
-                // if we've just released the player, conn is now null
-                if (player.conn != null)
-                    updateNotif(getStream())
+                if (intent.action == Intent.ACTION_MEDIA_BUTTON) {
+                    Log.e(TAG, "Media button")
+                } else {
+                    player.handleBroadcast(intent)
+                    // if we've just released the player, conn is now null
+                    if (player.conn != null)
+                        updateNotif(getStream())
+                }
             }
         }
         registerReceiver(receiver, IntentFilter().apply {
-            //addAction(Intent.ACTION_MEDIA_BUTTON)
+            addAction(Intent.ACTION_MEDIA_BUTTON)
             //addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
             addAction(ACTION_PLAY)
             addAction(ACTION_PAUSE)

@@ -16,7 +16,8 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 
 class PlayerConnection(
     context: Context,
-    listenerFactory: (PlayerConnection) -> Player.Listener
+    listenerFactory: (PlayerConnection) -> Player.Listener,
+    queueNavigatorFactory: (PlayerConnection) -> MediaSessionConnector.QueueNavigator
 ) {
     private val listener = listenerFactory(this)
     val exo = ExoPlayer.Builder(context)
@@ -35,7 +36,7 @@ class PlayerConnection(
             addListener(listener)
         }
     val session = MediaSessionCompat(context, javaClass.simpleName).apply {
-        //setFlags(MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS) // TODO meaning we need to do queue mgmt
+        setFlags(MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS)
         setSessionActivity(PendingIntent.getActivity(context, 0,
             Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
         setPlaybackState(PlaybackStateCompat.Builder()
@@ -49,6 +50,7 @@ class PlayerConnection(
         isActive = true
     }
     val connector = MediaSessionConnector(session).apply {
+        setQueueNavigator(queueNavigatorFactory(this@PlayerConnection))
         setPlayer(exo)
     }
 
