@@ -9,7 +9,7 @@ class StreamQueue {
     interface Listener {
         fun onSelect(from: Int, to: Int) {}
         fun onAppend(index: Int, size: Int) {}
-        fun onRemove(index: Int) {}
+        fun onRemove(index: Int, elem: StreamData) {}
         fun onMove(from: Int, to: Int) {}
         fun onClear(size: Int) {}
     }
@@ -100,14 +100,14 @@ class StreamQueue {
 
     fun remove(index: Int) {
         val size = items.size
-        items.removeAt(index)
+        val elem = items.removeAt(index)
 
         val cur = this.index.get()
         if (cur == size - 1 || cur > index)
             setIndex(cur - 1)
         else if (cur == index)
             setIndex(cur)
-        listeners.forEach { it.onRemove(index) }
+        listeners.forEach { it.onRemove(index, elem) }
     }
 
     fun remove(elem: StreamData) {

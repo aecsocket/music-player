@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.viewpager2.widget.ViewPager2
 import com.github.aecsocket.player.App
 import com.github.aecsocket.player.R
 import com.github.aecsocket.player.databinding.FragmentPagerBinding
@@ -69,6 +70,13 @@ class PagerFragment : Fragment() {
                 CONTENT_SEARCH to { SearchFragment() }
             ))
         }
+        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                if (mediaSheet.state == BottomSheetBehavior.STATE_EXPANDED) {
+                    mediaSheet.state = BottomSheetBehavior.STATE_COLLAPSED
+                }
+            }
+        })
         TabLayoutMediator(navTabs, viewPager) { tab, index ->
             tab.setIcon(when (index) {
                 CONTENT_HOME -> R.drawable.ic_home
@@ -144,20 +152,18 @@ class PagerFragment : Fragment() {
             }
         }
 
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val window = requireActivity().window
 
-        view.post {
+        binding.root.post {
             val insets = WindowInsetsCompat.toWindowInsetsCompat(window.decorView.rootWindowInsets)
             val inset = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             mediaTabs.modPadding(top = inset.top)
             mediaSheet.peekHeight = mediaBar.height
             mediaCoordinator.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                height = view.height - navTabs.height + mediaBar.height + mediaTabs.height
+                height = binding.root.height - navTabs.height + mediaBar.height + mediaTabs.height
             }
         }
+
+        return binding.root
     }
 }

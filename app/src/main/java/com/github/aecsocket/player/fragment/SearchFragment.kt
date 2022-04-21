@@ -129,13 +129,9 @@ class SearchFragment : Fragment() {
             }
         }
 
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val window = requireActivity().window
 
-        view.post {
+        binding.root.post {
             val insets = WindowInsetsCompat.toWindowInsetsCompat(window.decorView.rootWindowInsets)
             val inset = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             searchBar.updateLayoutParams<ViewGroup.MarginLayoutParams> {
@@ -146,6 +142,8 @@ class SearchFragment : Fragment() {
                 it.modPadding(top = inset.top + searchBar.height)
             }
         }
+
+        return binding.root
     }
 
     override fun onDestroy() {

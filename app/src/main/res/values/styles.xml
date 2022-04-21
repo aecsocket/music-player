@@ -4,7 +4,7 @@
     <color name="selector">#96717171</color>
 
     <style name="Base.Parent" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#ff9800</item>
+        <item name="colorPrimary">#ff8d00</item>
         <item name="colorPrimaryVariant">?attr/colorPrimary</item>
         <item name="colorOnPrimary">#000000</item>
 

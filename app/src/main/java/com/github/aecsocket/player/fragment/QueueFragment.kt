@@ -4,14 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.marginBottom
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.github.aecsocket.player.App
 import com.github.aecsocket.player.data.QueueAdapter
-import com.github.aecsocket.player.data.ServiceStreamData
 import com.github.aecsocket.player.databinding.FragmentQueueBinding
 import com.github.aecsocket.player.media.StreamQueue
+import com.github.aecsocket.player.modPadding
 
 class QueueFragment : Fragment() {
     private lateinit var adapter: QueueAdapter
@@ -27,6 +28,7 @@ class QueueFragment : Fragment() {
         val player = App.player(context)
 
         val queueItems = binding.queueItems
+        val queueClear = binding.queueClear
         val touchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.UP or ItemTouchHelper.DOWN,
             ItemTouchHelper.RIGHT
@@ -45,6 +47,14 @@ class QueueFragment : Fragment() {
         adapter = QueueAdapter(touchHelper, player.queue)
         queueItems.adapter = adapter
         touchHelper.attachToRecyclerView(queueItems)
+
+        queueClear.setOnClickListener {
+            player.queue.clear()
+        }
+
+        binding.root.post {
+            queueItems.modPadding(bottom = queueClear.height + (queueClear.marginBottom * 2))
+        }
 
         return binding.root
     }

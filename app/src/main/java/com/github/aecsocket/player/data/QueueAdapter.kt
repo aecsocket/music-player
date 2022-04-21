@@ -65,7 +65,7 @@ class QueueAdapter(
         override fun onAppend(index: Int, size: Int) {
             notifyItemRangeInserted(index, size)
         }
-        override fun onRemove(index: Int) {
+        override fun onRemove(index: Int, elem: StreamData) {
             notifyItemRemoved(index)
             notifyItemChanged(queue.getIndex())
         }

@@ -1,5 +1,6 @@
 package com.github.aecsocket.player.data
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -138,6 +139,8 @@ class ItemDataAdapter(
     }
 
     private val queueListener = object : StreamQueue.Listener {
+        @SuppressLint("NotifyDataSetChanged") // because... all of the data has changed
+        override fun onClear(size: Int) = notifyDataSetChanged()
     }
 
     init {
