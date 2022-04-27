@@ -175,6 +175,7 @@ class MediaPlayer(
                     // (we're about to buffer the next item)
                     if (_state.value == STATE_BUFFERING)
                         return
+                    _state.value = STATE_PAUSED
                     skipNext()
                 }
             }
@@ -238,8 +239,9 @@ class MediaPlayer(
         override fun getActiveQueueItemId(player: Player?) =
             queue.getIndex().toLong()
         override fun onSkipToPrevious(player: Player) = skipPrevious()
-        override fun onSkipToQueueItem(player: Player, id: Long) =
+        override fun onSkipToQueueItem(player: Player, id: Long) {
             queue.safeSetIndex(id.toInt())
+        }
         override fun onSkipToNext(player: Player) = skipNext()
 
         override fun onCommand(
@@ -290,13 +292,15 @@ class MediaPlayer(
     // BUT if e.g. an item is removed from queue, and a new stream is queued
     // the playback state will NOT change
     fun skipNext() {
-        queue.offsetIndex(1)
-        play()
+        if (queue.offsetIndex(1)) {
+            play()
+        }
     }
 
     fun skipPrevious() {
-        queue.offsetIndex(-1)
-        play()
+        if (queue.offsetIndex(-1)) {
+            play()
+        }
     }
 
     fun restartOrSkipPrevious() {

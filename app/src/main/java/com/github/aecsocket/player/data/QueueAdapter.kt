@@ -46,6 +46,7 @@ class QueueAdapter(
             } else {
                 base.setOnClickListener {
                     player.queue.setIndex(layoutPosition)
+                    player.play()
                 }
             }
         }
