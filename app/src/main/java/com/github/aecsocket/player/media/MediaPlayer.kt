@@ -1,5 +1,8 @@
 package com.github.aecsocket.player.media
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
@@ -9,6 +12,7 @@ import android.os.Looper
 import android.os.ResultReceiver
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.core.animation.addListener
 import androidx.core.content.ContextCompat
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
@@ -39,6 +43,10 @@ const val DURATION_UNKNOWN = -1L
 
 const val PROGRESS_UPDATE_INTERVAL = 10L
 const val RESTART_THRESHOLD = 1000L
+
+const val VOLUME_ANIM_DURATION = 1000L
+const val VOLUME_DUCK_DURATION = 500L
+const val VOLUME_DUCK = 0.2f
 
 sealed class ActiveStreamData(
     val data: StreamData,
@@ -114,13 +122,11 @@ class MediaPlayer(
         val conn = conn ?: return
         when (focus) {
             AudioManager.AUDIOFOCUS_GAIN -> {
-                conn.exo.volume = 1f
+                animateVolume(VOLUME_DUCK, 1f, VOLUME_DUCK_DURATION)
                 conn.exo.play()
-                // TODO anim volume to 1
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                conn.exo.volume = 0.2f
-                // TODO duck
+                animateVolume(1f, VOLUME_DUCK, VOLUME_DUCK_DURATION)
             }
             AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                 conn.exo.pause()
@@ -189,7 +195,6 @@ class MediaPlayer(
                     conn.exo.seekToDefaultPosition()
                 }
             } else {
-                abandonAudioFocus()
                 _state.value = STATE_PAUSED
             }
         }
@@ -277,15 +282,22 @@ class MediaPlayer(
 
     fun play() {
         val conn = conn ?: return
+        if (_state.value == STATE_PLAYING) return
         if (conn.exo.playbackState == Player.STATE_ENDED || _stream.value?.data?.type?.isLive() == true) {
             seekToDefault()
         }
+        requestAudioFocus()
         conn.exo.play()
+        animateVolume(0f, 1f, VOLUME_ANIM_DURATION)
     }
 
     fun pause() {
         val conn = conn ?: return
-        conn.exo.pause()
+        if (_state.value == STATE_PAUSED) return
+        abandonAudioFocus()
+        animateVolume(1f, 0f, VOLUME_ANIM_DURATION) {
+            conn.exo.pause()
+        }
     }
 
     // explicit transport actions will start playback
@@ -323,6 +335,29 @@ class MediaPlayer(
         val conn = conn ?: return
         conn.exo.seekToDefaultPosition()
         updatePosition()
+    }
+
+    fun animateVolume(from: Float, to: Float, duration: Long, onEnd: (() -> Unit)? = null) {
+        ValueAnimator().apply {
+            setFloatValues(from, to)
+            this.duration = duration
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationStart(animation: Animator?) {
+                    conn?.exo?.volume = from
+                }
+
+                override fun onAnimationCancel(animation: Animator?) {
+                    conn?.exo?.volume = to
+                }
+
+                override fun onAnimationEnd(animation: Animator?) {
+                    conn?.exo?.volume = to
+                    onEnd?.invoke()
+                }
+            })
+            addUpdateListener { conn?.exo?.volume = it.animatedValue as Float }
+            start()
+        }
     }
 
     companion object {

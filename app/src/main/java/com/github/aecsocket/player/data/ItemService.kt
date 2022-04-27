@@ -79,29 +79,7 @@ class NewPipeItemService(
     override suspend fun fetchStreams(url: String, scope: CoroutineScope): List<StreamData>? {
         return when (handle.getLinkTypeByUrl(url)) {
             StreamingService.LinkType.STREAM -> listOf(StreamInfo.getInfo(handle, url).asData(handle))
-            StreamingService.LinkType.PLAYLIST -> {
-                var playlist = PlaylistInfo.getInfo(handle, url)
-                // keep it ordered by using an array
-                val streams = Array<StreamData?>(playlist.streamCount.toInt()) { null }
-                val jobs = ArrayList<Job>()
-                var idx = 0
-                while (playlist != null) {
-                    playlist.relatedItems.forEach { elem ->
-                        val i = idx
-                        jobs.add(scope.launch(Dispatchers.IO) {
-                            streams[i] = elem.asData(handle)
-                        })
-                        idx++
-                    }
-                    playlist =
-                        if (playlist.hasNextPage()) PlaylistInfo.getInfo(playlist.nextPage.url)
-                        else null
-                }
-                jobs.joinAll()
-                // if we failed to get some entries, they'll stay null - just filter them out
-                // TODO maybe log these errors
-                streams.filterNotNull()
-            }
+            StreamingService.LinkType.PLAYLIST -> ItemData.listToStreams(handle, PlaylistInfo.getInfo(handle, url), scope)
             else -> null
         }
     }
