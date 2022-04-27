@@ -26,6 +26,8 @@
 
         <activity android:name="com.github.aecsocket.player.ErrorActivity" />
 
+        <activity android:name="com.github.aecsocket.player.SettingsActivity" />
+
         <service
             android:name="com.github.aecsocket.player.MediaService"
             android:exported="false"

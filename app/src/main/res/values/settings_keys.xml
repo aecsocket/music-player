@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pref_volume_anim_key">pref_volume_anim</string>
+</resources>

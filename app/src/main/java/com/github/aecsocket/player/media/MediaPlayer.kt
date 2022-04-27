@@ -44,7 +44,6 @@ const val DURATION_UNKNOWN = -1L
 const val PROGRESS_UPDATE_INTERVAL = 10L
 const val RESTART_THRESHOLD = 1000L
 
-const val VOLUME_ANIM_DURATION = 1000L
 const val VOLUME_DUCK_DURATION = 500L
 const val VOLUME_DUCK = 0.2f
 
@@ -288,14 +287,16 @@ class MediaPlayer(
         }
         requestAudioFocus()
         conn.exo.play()
-        animateVolume(0f, 1f, VOLUME_ANIM_DURATION)
+        animateVolume(0f, 1f, Prefs.volumeAnimTime(context))
     }
 
     fun pause() {
         val conn = conn ?: return
         if (_state.value == STATE_PAUSED) return
         abandonAudioFocus()
-        animateVolume(1f, 0f, VOLUME_ANIM_DURATION) {
+        // change value now, since if not, the state won't change until anim ended
+        _state.value = STATE_PAUSED
+        animateVolume(1f, 0f, Prefs.volumeAnimTime(context)) {
             conn.exo.pause()
         }
     }

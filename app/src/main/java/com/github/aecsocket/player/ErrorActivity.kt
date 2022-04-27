@@ -18,7 +18,6 @@ class ErrorActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val binding = ActivityErrorBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        WindowCompat.setDecorFitsSystemWindows(window, true)
 
         val error = intent.getParcelableExtra<ErrorInfo>(ERROR_INFO)
         if (error == null) {

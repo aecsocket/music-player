@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SeekBarPreference
+        android:key="@string/pref_volume_anim_key"
+        android:title="@string/pref_volume_anim_time_title"
+        android:summary="@string/pref_volume_anim_time_summary"
+        android:max="10"
+        android:defaultValue="2" />
+</androidx.preference.PreferenceScreen>

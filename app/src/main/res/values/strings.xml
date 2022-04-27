@@ -67,4 +67,7 @@
     <string name="spotify">Spotify</string>
     <string name="youtube">YouTube</string>
     <string name="soundcloud">SoundCloud</string>
+    <string name="settings">Settings</string>
+    <string name="pref_volume_anim_time_title">Fade in/out time</string>
+    <string name="pref_volume_anim_time_summary">How long it takes for the volume to fade in and out, after pressing play or pause (0–1 second)</string>
 </resources>
