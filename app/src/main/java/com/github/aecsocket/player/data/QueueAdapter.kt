@@ -30,7 +30,7 @@ class QueueAdapter(
             val player = App.player(context)
             base.isSelected = selected
             primary.text = item.primaryText(context)
-            secondary.text = item.secondaryText(context)
+            secondary.text = item.shortSecondaryText(context)
             item.art?.into(art)
 
             dragHandle.setOnTouchListener { view, event ->

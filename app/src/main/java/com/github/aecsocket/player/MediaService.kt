@@ -104,7 +104,7 @@ class MediaService : LifecycleService() {
             .setShowWhen(false)
             .setContentTitle(data.name)
             .setTicker(data.name)
-            .setContentText(data.artist ?: getString(R.string.unknown_artist))
+            .setContentText(data.creator ?: getString(R.string.unknown_artist))
             .setLargeIcon(art)
             .setContentIntent(PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), flags))
             .addAction(R.drawable.ic_skip_previous, getString(R.string.skip_previous),

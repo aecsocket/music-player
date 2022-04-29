@@ -12,7 +12,6 @@ import android.os.Looper
 import android.os.ResultReceiver
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import androidx.core.animation.addListener
 import androidx.core.content.ContextCompat
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
@@ -27,12 +26,9 @@ import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 import com.squareup.picasso.RequestCreator
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.lang.Exception
 
 const val STATE_PAUSED = 0
@@ -74,7 +70,7 @@ class MediaPlayer(
         })
     }
     var conn: PlayerConnection? = null
-    val resolver = SourceResolver(context, DataSources(context, DefaultBandwidthMeter.Builder(context).build()))
+    val sources = DataSources(context, DefaultBandwidthMeter.Builder(context).build())
 
     private val scope = MainScope()
     private val handler = Handler(Looper.getMainLooper())
@@ -145,18 +141,18 @@ class MediaPlayer(
                 val conn = requireConn()
                 conn.exo.clearMediaItems()
 
-                scope.launch(Dispatchers.IO) {
-                    try {
-                        val source = stream.fetchSource(resolver)
-                        withContext(Dispatchers.Main) {
-                            _stream.value = source
-                            conn.exo.setMediaSource(source.source)
-                            conn.exo.prepare()
-                        }
-                    } catch (ex: Exception) {
+                scope.launch(Dispatchers.IO + CoroutineExceptionHandler { _, ex ->
+                    scope.launch(Dispatchers.Main) {
                         ErrorHandler.handle(context, R.string.error_info_stream,
                             ErrorInfo(context, ex))
                         skipNext()
+                    }
+                }) {
+                    val source = stream.fetchSource(this, sources)
+                    withContext(Dispatchers.Main) {
+                        _stream.value = source
+                        conn.exo.setMediaSource(source.source)
+                        conn.exo.prepare()
                     }
                 }
             }
@@ -190,7 +186,7 @@ class MediaPlayer(
             if (playWhenReady) {
                 requestAudioFocus()
                 _state.value = STATE_PLAYING
-                if (_stream.value?.data?.type?.isLive() == true) {
+                if (_stream.value?.data?.streamType?.isLive() == true) {
                     conn.exo.seekToDefaultPosition()
                 }
             } else {
@@ -282,7 +278,7 @@ class MediaPlayer(
     fun play() {
         val conn = conn ?: return
         if (_state.value == STATE_PLAYING) return
-        if (conn.exo.playbackState == Player.STATE_ENDED || _stream.value?.data?.type?.isLive() == true) {
+        if (conn.exo.playbackState == Player.STATE_ENDED || _stream.value?.data?.streamType?.isLive() == true) {
             seekToDefault()
         }
         requestAudioFocus()

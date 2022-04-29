@@ -98,3 +98,7 @@ fun View.modPadding(left: Int? = null, top: Int? = null, right: Int? = null, bot
 fun snackbar(view: View, text: CharSequence, duration: Int) =
     Snackbar.make(view, text, duration)
         .setAnimationMode(Snackbar.ANIMATION_MODE_SLIDE)
+
+fun formatTime(ms: Long): String {
+    return "%02d:%02d".format(Locale.ROOT, ms / (1000 * 60), (ms / 1000) % 60)
+}

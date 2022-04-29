@@ -18,9 +18,9 @@ import com.github.aecsocket.player.media.StreamQueue
 import kotlinx.coroutines.*
 import java.lang.IllegalStateException
 
-const val ITEM_TYPE_STREAM = 0
-const val ITEM_TYPE_LIST = 1
-const val ITEM_TYPE_ARTIST = 2
+private const val ITEM_TYPE_STREAM = 0
+private const val ITEM_TYPE_LIST = 1
+private const val ITEM_TYPE_CREATOR = 2
 
 class ItemDataAdapter(
     private val queue: StreamQueue,
@@ -139,6 +139,7 @@ class ItemDataAdapter(
     }
 
     private val queueListener = object : StreamQueue.Listener {
+        // TODO update individual items as stream queue changes
         @SuppressLint("NotifyDataSetChanged") // because... all of the data has changed
         override fun onClear(size: Int) = notifyDataSetChanged()
     }
@@ -154,13 +155,13 @@ class ItemDataAdapter(
     override fun getItemViewType(position: Int) = when (getItem(position)) {
         is StreamData -> ITEM_TYPE_STREAM
         is StreamListData -> ITEM_TYPE_LIST
-        is ArtistData -> ITEM_TYPE_ARTIST
+        is CreatorData -> ITEM_TYPE_CREATOR
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = when (viewType) {
         ITEM_TYPE_STREAM -> StreamHolder.from(parent, queue)
         ITEM_TYPE_LIST -> StreamListHolder.from(parent, queue, scope)
-        ITEM_TYPE_ARTIST -> ArtistHolder.from(parent)
+        ITEM_TYPE_CREATOR -> ArtistHolder.from(parent)
         else -> throw IllegalStateException("cannot create view holder from $viewType")
     }
 

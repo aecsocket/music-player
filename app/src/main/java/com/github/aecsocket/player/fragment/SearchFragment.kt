@@ -2,13 +2,13 @@ package com.github.aecsocket.player.fragment
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.widget.TextView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
@@ -25,21 +25,22 @@ import com.github.aecsocket.player.data.*
 import com.github.aecsocket.player.databinding.FragmentSearchBinding
 import com.github.aecsocket.player.error.ErrorHandler
 import com.github.aecsocket.player.error.ErrorInfo
-import com.github.aecsocket.player.error.findView
 import com.github.aecsocket.player.viewmodel.SearchViewModel
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
-import java.lang.IllegalStateException
+import kotlin.math.min
 
 class SearchFragment : Fragment() {
     private val viewModel: SearchViewModel by viewModels()
-    private lateinit var adapter: ItemDataAdapter
+    private lateinit var adapter: ItemCategoryAdapter
     lateinit var searchBar: View
     lateinit var searchService: ChipGroup
     lateinit var searchResults: RecyclerView
     lateinit var searchResultsShimmer: ShimmerFrameLayout
+    lateinit var searchNoResults: View
+    lateinit var searchError: View
+    lateinit var searchErrorDesc: TextView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,6 +56,9 @@ class SearchFragment : Fragment() {
         searchService = binding.searchService
         searchResults = binding.searchResults
         searchResultsShimmer = binding.searchResultsShimmer
+        searchNoResults = binding.searchNoResults
+        searchError = binding.searchError
+        searchErrorDesc = binding.searchErrorDesc
         val searchBtn = binding.searchBtn
         val searchText = binding.searchText
 
@@ -74,6 +78,9 @@ class SearchFragment : Fragment() {
                 searchBtn.setImageResource(R.drawable.ic_clear)
                 searchBtn.setOnClickListener {
                     searchText.text.clear()
+                    viewModel.cancelQuery()
+                    adapter.submitList(null)
+                    showComplete()
                 }
             } else {
                 searchBtn.setImageResource(R.drawable.ic_search)
@@ -88,27 +95,19 @@ class SearchFragment : Fragment() {
                 if (event?.action != KeyEvent.ACTION_DOWN) {
                     inputMethods.hideSoftInputFromWindow(view.windowToken, 0)
                     val query = view.text.toString()
-                    if (query.isEmpty()) {
-                        viewModel.cancelQuery()
-                    } else {
-                        val services = selectedServices()
-                        if (services.isEmpty()) {
-                            snackbar(
-                                findView() ?: throw IllegalStateException("could not find view"),
-                                getString(R.string.must_specify_service), Snackbar.LENGTH_LONG).show()
-                        }
-                        viewModel.query(
-                            lifecycleScope,
-                            services,
-                            query)
-                    }
+
+                    val services = selectedServices()
+                    viewModel.query(
+                        lifecycleScope,
+                        services,
+                        query)
                 }
                 return@setOnEditorActionListener true
             }
             return@setOnEditorActionListener false
         }
 
-        adapter = ItemDataAdapter(player.queue, lifecycleScope)
+        adapter = ItemCategoryAdapter(player.queue, lifecycleScope)
         searchResults.adapter = adapter
 
         lifecycleScope.launch {
@@ -116,13 +115,24 @@ class SearchFragment : Fragment() {
                 viewModel.results.collect { results ->
                     when (results) {
                         is SearchViewModel.Results.Fetching -> showFetching()
-                        is SearchViewModel.Results.Complete -> {
-                            adapter.submitList(results.results)
+                        is SearchViewModel.Results.None -> showNoResults()
+                        is SearchViewModel.Results.Success -> {
+                            showComplete()
+                            adapter.submitList(results.results.map {
+                                // limit to first 3 items
+                                ItemCategory(it.type, it.items.subList(0, min(3, it.items.size)))
+                            })
                             if (results.exs.isNotEmpty()) {
-                                ErrorHandler.handle(this@SearchFragment, R.string.error_info_search,
+                                ErrorHandler.handle(
+                                    this@SearchFragment, R.string.error_info_search,
                                     ErrorInfo(context, results.exs))
                             }
-                            showComplete()
+                        }
+                        is SearchViewModel.Results.Error -> {
+                            showError(results.exs)
+                            ErrorHandler.handle(
+                                this@SearchFragment, R.string.error_info_search,
+                                ErrorInfo(context, results.exs))
                         }
                     }
                 }
@@ -148,7 +158,10 @@ class SearchFragment : Fragment() {
 
     override fun onDestroy() {
         super.onDestroy()
-        adapter.dispose()
+        for (i in 0 until searchResults.childCount) {
+            (searchResults.getChildViewHolder(searchResults.getChildAt(i)) as ItemCategoryAdapter.BaseHolder)
+                .dispose()
+        }
     }
 
     private fun selectedServices() = searchService.children
@@ -156,16 +169,41 @@ class SearchFragment : Fragment() {
         .filterNotNull()
         .toList()
 
-    private fun showFetching() {
+    private fun resetUi() {
+        adapter.submitList(null)
         searchResults.visibility = View.INVISIBLE
+
+        searchResultsShimmer.visibility = View.INVISIBLE
+        searchResultsShimmer.stopShimmer()
+
+        searchNoResults.visibility = View.INVISIBLE
+
+        searchError.visibility = View.INVISIBLE
+    }
+
+    private fun showFetching() {
+        resetUi()
         searchResultsShimmer.visibility = View.VISIBLE
         searchResultsShimmer.startShimmer()
-        adapter.submitList(emptyList())
     }
 
     private fun showComplete() {
+        resetUi()
         searchResults.visibility = View.VISIBLE
-        searchResultsShimmer.visibility = View.INVISIBLE
-        searchResultsShimmer.stopShimmer()
+    }
+
+    private fun showNoResults() {
+        resetUi()
+        searchNoResults.visibility = View.VISIBLE
+    }
+
+    private fun showError(ex: List<Throwable>) {
+        val context = requireContext()
+        resetUi()
+        searchError.visibility = View.VISIBLE
+        searchErrorDesc.text = ex.mapNotNull { when (it) {
+            is SearchViewModel.NoServicesException -> context.getString(R.string.must_specify_service)
+            else -> it.localizedMessage
+        } }.joinToString("\n")
     }
 }

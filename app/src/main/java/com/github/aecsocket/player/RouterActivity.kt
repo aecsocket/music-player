@@ -7,6 +7,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.github.aecsocket.player.data.ItemData
+import com.github.aecsocket.player.data.ItemService
 import com.github.aecsocket.player.error.ErrorHandler
 import com.github.aecsocket.player.error.ErrorInfo
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -46,7 +47,8 @@ class RouterActivity : AppCompatActivity() {
                     finish()
                 }
             }) {
-                ItemData.requestStreams(url, this)?.let { streams ->
+                ItemService.byUrl(url)?.let { service ->
+                    val streams = service.fetchStreams(this, url)
                     launch(Dispatchers.Main) {
                         streams.forEach { queue.appendInitial(it) }
                         finish()

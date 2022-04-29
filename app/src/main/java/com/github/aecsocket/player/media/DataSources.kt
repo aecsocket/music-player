@@ -19,7 +19,7 @@ const val MANIFEST_MINIMUM_RETRY = 5
 
 class DataSources(
     val context: Context,
-    val txListener: TransferListener
+    txListener: TransferListener
 ) {
     private val cacheData = CacheDataSourceFactory(context)
 

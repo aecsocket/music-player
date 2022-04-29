@@ -125,7 +125,7 @@ class PagerFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 player.stream.collect {
                     val stream = it ?: return@collect
-                    if (stream.data.type.isLive()) {
+                    if (stream.data.streamType.isLive()) {
                         positionDeterminate.visibility = View.INVISIBLE
                         positionLive.visibility = View.VISIBLE
                     } else {

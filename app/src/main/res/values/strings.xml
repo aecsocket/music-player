@@ -2,34 +2,60 @@
 <resources>
     <string name="app_name" translatable="false">MPlayer</string>
     <string name="lorem_ipsum" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</string>
+
     <string name="notif_media">Media</string>
     <string name="notif_media_desc">Notification for media playback control</string>
     <string name="notif_error">Error</string>
     <string name="notif_error_desc">Notification for error reports</string>
+
+    <string name="retry">Retry</string>
+    <string name="details">Details</string>
+    <string name="navigation">Navigation</string>
+
     <string name="search">Search</string>
     <string name="search_hint">Search tracks, artists, albums</string>
     <string name="stop">Stop</string>
     <string name="play">Play</string>
     <string name="pause">Pause</string>
+    <string name="play_pause">Play/pause</string>
     <string name="buffering">Buffering</string>
     <string name="skip_next">Skip to Next</string>
     <string name="skip_previous">Skip to Previous</string>
+
+    <string name="song">Song</string>
+    <string name="video">Video</string>
+    <string name="artist">Artist</string>
+    <string name="channel">Channel</string>
+    <string name="album">Album</string>
+    <string name="playlist">Playlist</string>
     <string name="unknown">Unknown</string>
     <string name="unknown_artist">Unknown artist</string>
-    <string name="album_info">Album (%d) · %s</string>
-    <string name="playlist_info">Playlist (%d) · %s</string>
+    <string name="unknown_time">--:--</string>
+
+    <string name="songs">Songs</string>
+    <string name="videos">Videos</string>
+    <string name="artists">Artists</string>
+    <string name="channels">Channels</string>
+    <string name="albums">Albums</string>
+    <string name="playlists">Playlists</string>
+
+    <string name="stream_info">%s · %s · %s</string>
+    <string name="stream_info_short">%s · %s</string>
+    <string name="list_info_no_size">%s · %s</string>
+    <plurals name="list_info">
+        <item quantity="one">%s · %s · %d song</item>
+        <item quantity="other">%s · %s · %d songs</item>
+    </plurals>
+
     <string name="nav_home">Home</string>
     <string name="nav_library">Library</string>
     <string name="nav_history">History</string>
     <string name="nav_queue">Queue</string>
     <string name="nav_tabs">Navigation tabs</string>
-    <string name="retry">Retry</string>
-    <string name="details">Details</string>
-    <string name="artist">Artist</string>
-    <string name="track">Track</string>
-    <string name="album">Album</string>
-    <string name="play_pause">Play and pause</string>
-    <string name="navigation">Navigation</string>
+
+    <string name="no_results_header">No results</string>
+    <string name="no_results_desc">Try a different search query</string>
+
     <string name="error_info_search">Could not run search query</string>
     <string name="error_info_art">Could not fetch art</string>
     <string name="error_info_stream">Could not fetch stream</string>
@@ -45,7 +71,7 @@
     <string name="error_content_not_supported">This content is not supported.</string>
     <string name="error_generic">An error occurred.</string>
     <string name="error_network">A network error occurred.</string>
-    <string name="unknown_time">--:--</string>
+
     <string name="queue">Queue</string>
     <string name="now_playing">Now Playing</string>
     <string name="lyrics">Lyrics</string>

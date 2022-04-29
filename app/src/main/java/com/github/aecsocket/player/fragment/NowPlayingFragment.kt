@@ -19,7 +19,6 @@ import com.github.aecsocket.player.databinding.FragmentNowPlayingBinding
 import com.github.aecsocket.player.media.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.util.*
 
 class NowPlayingFragment : Fragment() {
     private var seekDragging = false
@@ -46,7 +45,7 @@ class NowPlayingFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 player.stream.collect { stream ->
                     val stream = stream ?: return@collect
-                    if (stream.data.type.isLive()) {
+                    if (stream.data.streamType.isLive()) {
                         timeDeterminate.visibility = View.INVISIBLE
                         timeLive.visibility = View.VISIBLE
                     } else {
@@ -104,10 +103,6 @@ class NowPlayingFragment : Fragment() {
     }
 
     companion object {
-        fun formatTime(ms: Long): String {
-            return "%02d:%02d".format(Locale.ROOT, ms / (1000 * 60), (ms / 1000) % 60)
-        }
-
         fun setupBindings(
             context: Context,
             player: MediaPlayer,
@@ -147,7 +142,7 @@ class NowPlayingFragment : Fragment() {
                     player.stream.collect { stream ->
                         val stream = stream ?: return@collect
                         track.text = stream.data.primaryText(context)
-                        artist.text = stream.data.secondaryText(context)
+                        artist.text = stream.data.creator ?: context.getString(R.string.unknown_artist)
                         stream.art?.into(art)
                     }
                 }
