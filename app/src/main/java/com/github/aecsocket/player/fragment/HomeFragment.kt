@@ -20,23 +20,19 @@ class HomeFragment : Fragment() {
     ): View {
         val binding = FragmentHomeBinding.inflate(inflater, container, false)
         val context = requireContext()
+        val window = requireActivity().window
 
         binding.btnSettings.setOnClickListener {
             startActivity(Intent(context, SettingsActivity::class.java))
         }
 
-        /* TODO nudge off insets
         binding.root.post {
             val insets = WindowInsetsCompat.toWindowInsetsCompat(window.decorView.rootWindowInsets)
             val inset = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            searchBar.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            binding.homeTop.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 topMargin = inset.top
             }
-
-            listOf(searchResults, searchResultsShimmer).forEach {
-                it.modPadding(top = inset.top + searchBar.height)
-            }
-        }*/
+        }
 
         return binding.root
     }

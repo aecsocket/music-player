@@ -11,6 +11,7 @@ object SpotifyItemService : ItemService {
 
     override suspend fun fetchStream(
         scope: CoroutineScope,
+        context: Context,
         sources: DataSources,
         url: String
     ): LoadedStreamData {

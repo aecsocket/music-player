@@ -148,7 +148,7 @@ class MediaPlayer(
                         skipNext()
                     }
                 }) {
-                    val source = stream.fetchSource(this, sources)
+                    val source = stream.fetchSource(this, context, sources)
                     withContext(Dispatchers.Main) {
                         _stream.value = source
                         conn.exo.setMediaSource(source.source)

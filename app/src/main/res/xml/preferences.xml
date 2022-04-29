@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <DropDownPreference
+        android:key="pref_stream_quality"
+        android:title="@string/pref_stream_quality_title"
+        android:entries="@array/pref_stream_quality_names"
+        app:useSimpleSummaryProvider="true"
+        android:entryValues="@array/pref_stream_quality_values" />
 
     <SeekBarPreference
         android:key="@string/pref_volume_anim_key"

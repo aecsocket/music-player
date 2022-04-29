@@ -92,11 +92,10 @@ interface StreamData : ItemData {
         formatTime(duration))
 
     fun shortSecondaryText(context: Context) = context.getString(R.string.stream_info_short,
-        context.getString(typeNameKey()),
         creator(context),
         formatTime(duration))
 
-    suspend fun fetchSource(scope: CoroutineScope, sources: DataSources): LoadedStreamData
+    suspend fun fetchSource(scope: CoroutineScope, context: Context, sources: DataSources): LoadedStreamData
 }
 
 data class ServiceStreamData(
@@ -116,8 +115,9 @@ data class ServiceStreamData(
 
     override suspend fun fetchSource(
         scope: CoroutineScope,
+        context: Context,
         sources: DataSources
-    ) = service.fetchStream(scope, sources, url)
+    ) = service.fetchStream(scope, context, sources, url)
 }
 
 interface CreatorData : ItemData {

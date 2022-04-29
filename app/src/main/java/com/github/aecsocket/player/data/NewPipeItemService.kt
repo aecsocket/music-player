@@ -1,6 +1,11 @@
 package com.github.aecsocket.player.data
 
 import android.content.Context
+import android.util.Log
+import com.github.aecsocket.player.Prefs
+import com.github.aecsocket.player.STREAM_QUALITY_EFFICIENCY
+import com.github.aecsocket.player.STREAM_QUALITY_QUALITY
+import com.github.aecsocket.player.TAG
 import com.github.aecsocket.player.media.DataSources
 import com.github.aecsocket.player.media.LoadedStreamData
 import com.github.aecsocket.player.media.isLive
@@ -64,6 +69,7 @@ class NewPipeItemService(
 
     override suspend fun fetchStream(
         scope: CoroutineScope,
+        context: Context,
         sources: DataSources,
         url: String
     ): LoadedStreamData {
@@ -89,7 +95,12 @@ class NewPipeItemService(
             throw NoStreamsException()
 
         // TODO highest quality or lowest data
-        val best = mostEfficient(streams)
+        val best = when (val quality = Prefs.streamQuality(context)) {
+            STREAM_QUALITY_QUALITY -> highestQuality(streams)
+            STREAM_QUALITY_EFFICIENCY -> mostEfficient(streams)
+            else -> throw IllegalStateException("unknown stream quality '$quality'")
+        }
+        Log.d(TAG, "Made loaded stream at ${best.averageBitrate}kbps")
         // TODO diff types of factories?? idk
 
         return LoadedStreamData(stream, art,

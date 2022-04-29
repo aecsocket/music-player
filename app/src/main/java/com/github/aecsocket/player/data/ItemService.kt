@@ -12,7 +12,7 @@ import java.lang.IllegalStateException
 interface ItemService {
     fun name(context: Context): String
 
-    suspend fun fetchStream(scope: CoroutineScope, sources: DataSources, url: String): LoadedStreamData
+    suspend fun fetchStream(scope: CoroutineScope, context: Context, sources: DataSources, url: String): LoadedStreamData
 
     suspend fun fetchStreams(scope: CoroutineScope, url: String): List<StreamData>
 
@@ -58,6 +58,7 @@ object LocalItemService : ItemService {
 
     override suspend fun fetchStream(
         scope: CoroutineScope,
+        context: Context,
         sources: DataSources,
         url: String
     ): LoadedStreamData {
