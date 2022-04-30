@@ -2,22 +2,21 @@ package com.github.aecsocket.player.data
 
 import android.content.Context
 import android.util.Log
-import com.github.aecsocket.player.Prefs
-import com.github.aecsocket.player.STREAM_QUALITY_EFFICIENCY
-import com.github.aecsocket.player.STREAM_QUALITY_QUALITY
-import com.github.aecsocket.player.TAG
+import com.github.aecsocket.player.*
 import com.github.aecsocket.player.media.DataSources
 import com.github.aecsocket.player.media.LoadedStreamData
 import com.github.aecsocket.player.media.isLive
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.source.MediaSource
 import com.squareup.picasso.Picasso
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem
+import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.playlist.PlaylistInfo
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 import org.schabi.newpipe.extractor.search.SearchInfo
@@ -30,10 +29,14 @@ const val YT_ARTIST_SUFFIX = " - Topic"
 
 class NoStreamsException : RuntimeException()
 
+data class TypeNames(
+    val stream: Int,
+    val creator: Int
+)
+
 class NewPipeItemService(
     val handle: StreamingService,
-    val streamType: Int,
-    val creatorType: Int,
+    val typeNames: TypeNames,
     val nameId: Int? = null,
     private val filterSets: List<List<String>> = listOf(
         emptyList(),
@@ -53,13 +56,13 @@ class NewPipeItemService(
     // so scuffed but idc
     private fun streamType(creator: String): NameTransform {
         val suffix = creator.lastIndexOf(YT_ARTIST_SUFFIX)
-        return if (suffix == -1) NameTransform(streamType, creator)
+        return if (suffix == -1) NameTransform(typeNames.stream, creator)
             else NameTransform(ITEM_TYPE_SONG, creator.substring(0, suffix))
     }
 
     private fun creatorType(name: String): NameTransform {
         val suffix = name.lastIndexOf(YT_ARTIST_SUFFIX)
-        return if (suffix == -1) NameTransform(creatorType, name)
+        return if (suffix == -1) NameTransform(typeNames.creator, name)
             else NameTransform(ITEM_TYPE_ARTIST, name.substring(0, suffix))
     }
 
@@ -145,40 +148,55 @@ class NewPipeItemService(
         }
     }
 
-    override suspend fun fetchSearch(scope: CoroutineScope, query: String): List<ItemCategory> {
-        val result = HashMap<Int, MutableList<ItemData>>()
+    override suspend fun fetchSearch(scope: CoroutineScope, query: String): Errorable<List<ItemCategory>> {
+        with (scope) {
+            val result = HashMap<Int, MutableList<ItemData>>()
+            val exs = ArrayList<Throwable>()
 
-        fun doFetch(filters: List<String>) {
-            SearchInfo.getInfo(handle, handle.searchQHFactory.fromQuery(query, filters, ""))
-                .relatedItems.mapNotNull {
-                    fun add(transform: NameTransform, itemFactory: (Int, String) -> ItemData) {
-                        val item = itemFactory(transform.type, transform.name)
-                        val list = result.computeIfAbsent(transform.type) { ArrayList() }
-                        synchronized(list) {
-                            if (list.indexOfFirst { data -> data.same(item) } == -1) {
-                                list.add(itemFactory(transform.type, transform.name))
+            fun doFetch(filters: List<String>) {
+                try {
+                    SearchInfo.getInfo(handle, handle.searchQHFactory.fromQuery(query, filters, ""))
+                        .relatedItems.mapNotNull {
+                            fun add(
+                                transform: NameTransform,
+                                itemFactory: (Int, String) -> ItemData
+                            ) {
+                                val item = itemFactory(transform.type, transform.name)
+                                val list = result.computeIfAbsent(transform.type) { ArrayList() }
+                                synchronized(list) {
+                                    if (list.indexOfFirst { data -> data.same(item) } == -1) {
+                                        list.add(itemFactory(transform.type, transform.name))
+                                    }
+                                }
+                            }
+
+                            when (it) {
+                                is StreamInfoItem -> add(streamType(it.uploaderName)) { type, creator ->
+                                    it.asData(this@NewPipeItemService, type, creator)
+                                }
+                                is ChannelInfoItem -> add(creatorType(it.name)) { type, name ->
+                                    it.asData(this@NewPipeItemService, type, name)
+                                }
+                                is PlaylistInfoItem -> add(
+                                    listType(
+                                        it.uploaderName,
+                                        it.streamCount
+                                    )
+                                ) { type, creator ->
+                                    it.asData(this@NewPipeItemService, type, creator)
+                                }
+                                else -> null
                             }
                         }
-                    }
-
-                    when (it) {
-                        is StreamInfoItem -> add(streamType(it.uploaderName)) { type, creator ->
-                            it.asData(this, type, creator)
-                        }
-                        is ChannelInfoItem -> add(creatorType(it.name)) { type, name ->
-                            it.asData(this, type, name)
-                        }
-                        is PlaylistInfoItem -> add(listType(it.uploaderName, it.streamCount)) { type, creator ->
-                            it.asData(this, type, null)
-                        }
-                        else -> null
-                    }
+                } catch (ex: Throwable) {
+                    exs.add(ex)
                 }
-        }
+            }
 
-        // NewPipe/ServiceHelper @ 55
-        filterSets.map { filters -> scope.async { doFetch(filters) } }.map { it.await() }
-        return result.map { (type, items) -> ItemCategory(type, items) }
+            // NewPipe/ServiceHelper @ 55
+            filterSets.map { filters -> async { doFetch(filters) } }.map { it.await() }
+            return Errorable(result.map { (type, items) -> ItemCategory(type, items) }, exs)
+        }
     }
 
     companion object {

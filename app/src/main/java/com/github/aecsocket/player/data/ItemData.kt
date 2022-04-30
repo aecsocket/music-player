@@ -85,15 +85,17 @@ interface StreamData : ItemData {
 
     fun creator(context: Context) = creator ?: context.getString(R.string.unknown_artist)
 
+    fun formatDuration(context: Context) = if (duration >= 0) formatTime(context, duration) else context.getString(R.string.live)
+
     override fun primaryText(context: Context) = name
     override fun secondaryText(context: Context) = context.getString(R.string.stream_info,
         context.getString(typeNameKey()),
         creator(context),
-        formatTime(duration))
+        formatDuration(context))
 
     fun shortSecondaryText(context: Context) = context.getString(R.string.stream_info_short,
         creator(context),
-        formatTime(duration))
+        formatDuration(context))
 
     suspend fun fetchSource(scope: CoroutineScope, context: Context, sources: DataSources): LoadedStreamData
 }

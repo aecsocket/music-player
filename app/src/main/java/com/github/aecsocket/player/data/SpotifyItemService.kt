@@ -1,6 +1,7 @@
 package com.github.aecsocket.player.data
 
 import android.content.Context
+import com.github.aecsocket.player.Errorable
 import com.github.aecsocket.player.R
 import com.github.aecsocket.player.media.DataSources
 import com.github.aecsocket.player.media.LoadedStreamData
@@ -18,11 +19,7 @@ object SpotifyItemService : ItemService {
         TODO("Not yet implemented")
     }
 
-    override suspend fun fetchStreams(scope: CoroutineScope, url: String): List<StreamData> {
-        TODO("Not yet implemented")
-    }
+    override suspend fun fetchStreams(scope: CoroutineScope, url: String) = emptyList<StreamData>()
 
-    override suspend fun fetchSearch(scope: CoroutineScope, query: String): List<ItemCategory> {
-        TODO("Not yet implemented")
-    }
+    override suspend fun fetchSearch(scope: CoroutineScope, query: String) = Errorable<List<ItemCategory>>(emptyList())
 }

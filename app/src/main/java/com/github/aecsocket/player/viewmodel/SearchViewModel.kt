@@ -44,10 +44,10 @@ class SearchViewModel : ViewModel() {
             resultsJob?.cancel()
             resultsJob = scope.launch {
                 ItemService.byUrl(query)?.let { service ->
-                    scope.launch(Dispatchers.IO + CoroutineExceptionHandler { _, ex ->
+                    launch(Dispatchers.IO + CoroutineExceptionHandler { _, ex ->
                         error(listOf(ex))
                     }) {
-                        complete(service.fetchStreams(scope, query).asCategories())
+                        complete(service.fetchStreams(this, query).asCategories())
                     }
                 } ?: run {
                     if (defServices.isEmpty()) {
@@ -57,10 +57,10 @@ class SearchViewModel : ViewModel() {
                         val exs = ArrayList<Throwable>()
                         defServices.map { service ->
                             async {
-                                launch(Dispatchers.IO + CoroutineExceptionHandler { _, ex ->
-                                    exs.add(ex)
-                                }) {
-                                    results.addAll(service.fetchSearch(this, query))
+                                launch(Dispatchers.IO) {
+                                    val res = service.fetchSearch(this, query)
+                                    results.addAll(res.result)
+                                    exs.addAll(res.exs)
                                 }
                             }
                         }.map { it.await() }

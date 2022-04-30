@@ -1,12 +1,16 @@
 package com.github.aecsocket.player.data
 
 import android.content.Context
+import com.github.aecsocket.player.Errorable
 import com.github.aecsocket.player.R
 import com.github.aecsocket.player.media.*
 import kotlinx.coroutines.*
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
+import org.schabi.newpipe.extractor.services.media_ccc.MediaCCCService
+import org.schabi.newpipe.extractor.services.peertube.PeertubeService
+import org.schabi.newpipe.extractor.services.youtube.YoutubeService
 import java.lang.IllegalStateException
 
 interface ItemService {
@@ -16,16 +20,18 @@ interface ItemService {
 
     suspend fun fetchStreams(scope: CoroutineScope, url: String): List<StreamData>
 
-    suspend fun fetchSearch(scope: CoroutineScope, query: String): List<ItemCategory>
+    suspend fun fetchSearch(scope: CoroutineScope, query: String): Errorable<List<ItemCategory>>
 
     companion object {
-        val NEWPIPE = ServiceList.all().associateWith { NewPipeItemService(it,
-            ITEM_TYPE_VIDEO, ITEM_TYPE_CHANNEL) }
+        val NEWPIPE = ServiceList.all().associateWith { NewPipeItemService(it, when (it) {
+            is YoutubeService, is PeertubeService, is MediaCCCService -> TypeNames(ITEM_TYPE_VIDEO, ITEM_TYPE_CHANNEL)
+            else -> TypeNames(ITEM_TYPE_SONG, ITEM_TYPE_ARTIST)
+        }) }
 
         val ALL = listOf(
             LocalItemService,
             NewPipeItemService(ServiceList.YouTube,
-                ITEM_TYPE_SONG, ITEM_TYPE_ARTIST,
+                TypeNames(ITEM_TYPE_SONG, ITEM_TYPE_ARTIST),
                 R.string.yt_music,
                 listOf(
                     listOf("music_songs", "music_playlists", "music_albums", "music_artists"),
@@ -65,11 +71,7 @@ object LocalItemService : ItemService {
         TODO("Not yet implemented")
     }
 
-    override suspend fun fetchStreams(scope: CoroutineScope, url: String): List<StreamData> {
-        TODO("Not yet implemented")
-    }
+    override suspend fun fetchStreams(scope: CoroutineScope, url: String) = emptyList<StreamData>()
 
-    override suspend fun fetchSearch(scope: CoroutineScope, query: String): List<ItemCategory> {
-        TODO("Not yet implemented")
-    }
+    override suspend fun fetchSearch(scope: CoroutineScope, query: String) = Errorable<List<ItemCategory>>(emptyList())
 }

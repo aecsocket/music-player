@@ -99,6 +99,11 @@ fun snackbar(view: View, text: CharSequence, duration: Int) =
     Snackbar.make(view, text, duration)
         .setAnimationMode(Snackbar.ANIMATION_MODE_SLIDE)
 
-fun formatTime(ms: Long): String {
-    return "%02d:%02d".format(Locale.ROOT, ms / (1000 * 60), (ms / 1000) % 60)
+fun formatTime(context: Context, ms: Long): String {
+    val hrs = ms / (1000 * 60 * 60)
+    val mins = (ms / (1000 * 60)) % 60
+    val secs = (ms / 1000) % 60
+
+    return if (hrs > 0) context.getString(R.string.time_hours, hrs, mins, secs)
+        else context.getString(R.string.time_minutes, mins, secs)
 }

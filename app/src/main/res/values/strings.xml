@@ -11,6 +11,8 @@
     <string name="retry">Retry</string>
     <string name="details">Details</string>
     <string name="navigation">Navigation</string>
+    <string name="time_hours">%d:%02d:%02d</string>
+    <string name="time_minutes">%d:%02d</string>
 
     <string name="search">Search</string>
     <string name="search_hint">Search tracks, artists, albums</string>
@@ -53,9 +55,13 @@
     <string name="nav_queue">Queue</string>
     <string name="nav_tabs">Navigation tabs</string>
 
-    <string name="no_results_header">No results</string>
-    <string name="no_results_desc">Try a different search query</string>
+    <string name="no_results_header">No results.</string>
+    <string name="no_results_desc">Try a different search query.</string>
+    <string name="search_error_header">An error occurred.</string>
+    <string name="search_error_desc">Check your internet connection.</string>
 
+    <string name="error_header">An error occurred.</string>
+    <string name="error_subheader">Errors:</string>
     <string name="error_info_search">Could not run search query</string>
     <string name="error_info_art">Could not fetch art</string>
     <string name="error_info_stream">Could not fetch stream</string>
@@ -85,9 +91,6 @@
     <string name="queue_clear">Clear queue</string>
     <string name="queue_jump">Jump to current item</string>
     <string name="open_with">Open with</string>
-    <string name="error_header">An error occurred.</string>
-    <string name="error_subheader">Errors:</string>
-    <string name="must_specify_service">You must specify at least 1 service</string>
     <string name="local">Local</string>
     <string name="yt_music">YT Music</string>
     <string name="spotify">Spotify</string>

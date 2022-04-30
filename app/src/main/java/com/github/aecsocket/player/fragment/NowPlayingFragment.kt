@@ -60,7 +60,7 @@ class NowPlayingFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 player.duration.collect { duration ->
                     timeDuration.text = if (duration < 0) getString(R.string.unknown_time)
-                    else formatTime(duration)
+                    else formatTime(context, duration)
                     timeSeek.max = duration.toInt()
                 }
             }
@@ -71,7 +71,7 @@ class NowPlayingFragment : Fragment() {
                 player.position.collect { position ->
                     if (!seekDragging) {
                         timeSeek.progress = position.position.toInt()
-                        timePosition.text = formatTime(position.position)
+                        timePosition.text = formatTime(context, position.position)
                     }
                     timeSeek.secondaryProgress = position.buffered.toInt()
                 }
@@ -86,7 +86,7 @@ class NowPlayingFragment : Fragment() {
             override fun onProgressChanged(view: SeekBar, progress: Int, fromUser: Boolean) {
                 if (!fromUser)
                     return
-                timePosition.text = formatTime(progress.toLong())
+                timePosition.text = formatTime(context, progress.toLong())
             }
 
             override fun onStartTrackingTouch(view: SeekBar) {

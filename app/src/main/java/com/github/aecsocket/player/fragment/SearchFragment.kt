@@ -8,7 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import android.widget.TextView
+import android.widget.Button
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
@@ -33,6 +33,7 @@ import kotlin.math.min
 
 class SearchFragment : Fragment() {
     private val viewModel: SearchViewModel by viewModels()
+    private var lastQuery: String? = null
     private lateinit var adapter: ItemCategoryAdapter
     lateinit var searchBar: View
     lateinit var searchService: ChipGroup
@@ -40,7 +41,7 @@ class SearchFragment : Fragment() {
     lateinit var searchResultsShimmer: ShimmerFrameLayout
     lateinit var searchNoResults: View
     lateinit var searchError: View
-    lateinit var searchErrorDesc: TextView
+    lateinit var searchErrorDetails: Button
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,7 +59,7 @@ class SearchFragment : Fragment() {
         searchResultsShimmer = binding.searchResultsShimmer
         searchNoResults = binding.searchNoResults
         searchError = binding.searchError
-        searchErrorDesc = binding.searchErrorDesc
+        searchErrorDetails = binding.searchErrorDetails
         val searchBtn = binding.searchBtn
         val searchText = binding.searchText
 
@@ -71,6 +72,10 @@ class SearchFragment : Fragment() {
                     isChecked = true
                 }
             })
+        }
+
+        binding.searchErrorRetry.setOnClickListener {
+            lastQuery?.let { query(it) }
         }
 
         searchText.addTextChangedListener { text ->
@@ -94,13 +99,7 @@ class SearchFragment : Fragment() {
             ) {
                 if (event?.action != KeyEvent.ACTION_DOWN) {
                     inputMethods.hideSoftInputFromWindow(view.windowToken, 0)
-                    val query = view.text.toString()
-
-                    val services = selectedServices()
-                    viewModel.query(
-                        lifecycleScope,
-                        services,
-                        query)
+                    query(view.text.toString())
                 }
                 return@setOnEditorActionListener true
             }
@@ -130,9 +129,6 @@ class SearchFragment : Fragment() {
                         }
                         is SearchViewModel.Results.Error -> {
                             showError(results.exs)
-                            ErrorHandler.handle(
-                                this@SearchFragment, R.string.error_info_search,
-                                ErrorInfo(context, results.exs))
                         }
                     }
                 }
@@ -148,7 +144,7 @@ class SearchFragment : Fragment() {
                 topMargin = inset.top
             }
 
-            listOf(searchResults, searchResultsShimmer).forEach {
+            listOf(searchResults, searchResultsShimmer, searchNoResults, searchError).forEach {
                 it.modPadding(top = inset.top + searchBar.height)
             }
         }
@@ -168,6 +164,15 @@ class SearchFragment : Fragment() {
         .mapIndexed { idx, chip -> if ((chip as Chip).isChecked) ItemService.ALL[idx] else null }
         .filterNotNull()
         .toList()
+
+    private fun query(query: String) {
+        lastQuery = query
+        val services = selectedServices()
+        viewModel.query(
+            lifecycleScope,
+            services,
+            query)
+    }
 
     private fun resetUi() {
         adapter.submitList(null)
@@ -201,9 +206,8 @@ class SearchFragment : Fragment() {
         val context = requireContext()
         resetUi()
         searchError.visibility = View.VISIBLE
-        searchErrorDesc.text = ex.mapNotNull { when (it) {
-            is SearchViewModel.NoServicesException -> context.getString(R.string.must_specify_service)
-            else -> it.localizedMessage
-        } }.joinToString("\n")
+        searchErrorDetails.setOnClickListener {
+            ErrorHandler.openActivity(context, ErrorInfo(context, ex))
+        }
     }
 }
