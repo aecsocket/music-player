@@ -22,4 +22,6 @@ object SpotifyItemService : ItemService {
     override suspend fun fetchStreams(scope: CoroutineScope, url: String) = emptyList<StreamData>()
 
     override suspend fun fetchSearch(scope: CoroutineScope, query: String) = Errorable<List<ItemCategory>>(emptyList())
+
+    override suspend fun fetchSuggestions(scope: CoroutineScope, query: String) = emptyList<String>()
 }

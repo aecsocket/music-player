@@ -1,7 +1,5 @@
 package com.github.aecsocket.player.media
 
-import android.util.Log
-import com.github.aecsocket.player.TAG
 import com.github.aecsocket.player.data.StreamData
 import java.util.concurrent.atomic.AtomicInteger
 

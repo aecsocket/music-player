@@ -22,6 +22,8 @@ interface ItemService {
 
     suspend fun fetchSearch(scope: CoroutineScope, query: String): Errorable<List<ItemCategory>>
 
+    suspend fun fetchSuggestions(scope: CoroutineScope, query: String): List<String>
+
     companion object {
         val NEWPIPE = ServiceList.all().associateWith { NewPipeItemService(it, when (it) {
             is YoutubeService, is PeertubeService, is MediaCCCService -> TypeNames(ITEM_TYPE_VIDEO, ITEM_TYPE_CHANNEL)
@@ -74,4 +76,6 @@ object LocalItemService : ItemService {
     override suspend fun fetchStreams(scope: CoroutineScope, url: String) = emptyList<StreamData>()
 
     override suspend fun fetchSearch(scope: CoroutineScope, query: String) = Errorable<List<ItemCategory>>(emptyList())
+
+    override suspend fun fetchSuggestions(scope: CoroutineScope, query: String) = emptyList<String>()
 }

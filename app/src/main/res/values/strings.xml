@@ -62,7 +62,8 @@
 
     <string name="error_header">An error occurred.</string>
     <string name="error_subheader">Errors:</string>
-    <string name="error_info_search">Could not run search query</string>
+    <string name="error_info_search">Could not fetch search query</string>
+    <string name="error_info_suggestions">Could not fetch search suggestions</string>
     <string name="error_info_art">Could not fetch art</string>
     <string name="error_info_stream">Could not fetch stream</string>
     <string name="error_info_list">Could not fetch list items</string>

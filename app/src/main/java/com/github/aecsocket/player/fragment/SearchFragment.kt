@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.widget.EditText
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
@@ -34,7 +35,8 @@ import kotlin.math.min
 class SearchFragment : Fragment() {
     private val viewModel: SearchViewModel by viewModels()
     private var lastQuery: String? = null
-    private lateinit var adapter: ItemCategoryAdapter
+    private lateinit var resultsAdapter: ItemCategoryAdapter
+    private lateinit var suggestionsAdapter: SuggestionsAdapter
     lateinit var searchBar: View
     lateinit var searchService: ChipGroup
     lateinit var searchResults: RecyclerView
@@ -42,6 +44,8 @@ class SearchFragment : Fragment() {
     lateinit var searchNoResults: View
     lateinit var searchError: View
     lateinit var searchErrorDetails: Button
+    lateinit var searchSuggestions: RecyclerView
+    lateinit var searchText: EditText
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -51,7 +55,6 @@ class SearchFragment : Fragment() {
         val binding = FragmentSearchBinding.inflate(inflater, container, false)
         val context = requireContext()
         val player = App.player(context)
-        val inputMethods = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 
         searchBar = binding.searchBar
         searchService = binding.searchService
@@ -60,8 +63,9 @@ class SearchFragment : Fragment() {
         searchNoResults = binding.searchNoResults
         searchError = binding.searchError
         searchErrorDetails = binding.searchErrorDetails
+        searchSuggestions = binding.searchSuggestions
+        searchText = binding.searchText
         val searchBtn = binding.searchBtn
-        val searchText = binding.searchText
 
         for (service in ItemService.ALL) {
             searchService.addView(Chip(context).apply {
@@ -75,7 +79,7 @@ class SearchFragment : Fragment() {
         }
 
         binding.searchErrorRetry.setOnClickListener {
-            lastQuery?.let { query(it) }
+            lastQuery?.let { query(context, it) }
         }
 
         searchText.addTextChangedListener { text ->
@@ -83,14 +87,15 @@ class SearchFragment : Fragment() {
                 searchBtn.setImageResource(R.drawable.ic_clear)
                 searchBtn.setOnClickListener {
                     searchText.text.clear()
-                    viewModel.cancelQuery()
-                    adapter.submitList(null)
+                    resultsAdapter.submitList(null)
                     showComplete()
                 }
             } else {
                 searchBtn.setImageResource(R.drawable.ic_search)
                 searchBtn.setOnClickListener(null)
             }
+
+            viewModel.fetchSuggestions(lifecycleScope, selectedServices(), text.toString())
         }
         searchText.setOnEditorActionListener { view, action, event ->
             if (
@@ -98,38 +103,61 @@ class SearchFragment : Fragment() {
                 || (event?.keyCode == KeyEvent.KEYCODE_ENTER)
             ) {
                 if (event?.action != KeyEvent.ACTION_DOWN) {
-                    inputMethods.hideSoftInputFromWindow(view.windowToken, 0)
-                    query(view.text.toString())
+                    query(context, view.text.toString())
                 }
                 return@setOnEditorActionListener true
             }
             return@setOnEditorActionListener false
         }
+        searchText.setOnFocusChangeListener { view, hasFocus ->
+            if (hasFocus) {
+                showSuggestions()
+            }
+        }
 
-        adapter = ItemCategoryAdapter(player.queue, lifecycleScope)
-        searchResults.adapter = adapter
+        resultsAdapter = ItemCategoryAdapter(player.queue, lifecycleScope)
+            .also { searchResults.adapter = it }
+        suggestionsAdapter = SuggestionsAdapter {
+            searchText.setText(it.value)
+            query(context, it.value)
+        }.also { searchSuggestions.adapter = it }
+        searchSuggestions.itemAnimator = null // disable animations
 
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.results.collect { results ->
-                    when (results) {
+                viewModel.results.collect { result ->
+                    when (result) {
                         is SearchViewModel.Results.Fetching -> showFetching()
                         is SearchViewModel.Results.None -> showNoResults()
                         is SearchViewModel.Results.Success -> {
                             showComplete()
-                            adapter.submitList(results.results.map {
+                            resultsAdapter.submitList(result.results.map {
                                 // limit to first 3 items
                                 ItemCategory(it.type, it.items.subList(0, min(3, it.items.size)))
                             })
-                            if (results.exs.isNotEmpty()) {
+                            if (result.exs.isNotEmpty()) {
                                 ErrorHandler.handle(
                                     this@SearchFragment, R.string.error_info_search,
-                                    ErrorInfo(context, results.exs))
+                                    ErrorInfo(context, result.exs))
                             }
                         }
                         is SearchViewModel.Results.Error -> {
-                            showError(results.exs)
+                            showError(result.exs)
                         }
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.suggestions.collect { result ->
+                    suggestionsAdapter.submitList(result.result)
+                    showSuggestions()
+                    if (result.exs.isNotEmpty()) {
+                        ErrorHandler.handle(
+                            this@SearchFragment, R.string.error_info_suggestions,
+                            ErrorInfo(context, result.exs))
                     }
                 }
             }
@@ -144,7 +172,7 @@ class SearchFragment : Fragment() {
                 topMargin = inset.top
             }
 
-            listOf(searchResults, searchResultsShimmer, searchNoResults, searchError).forEach {
+            listOf(searchResults, searchResultsShimmer, searchNoResults, searchError, searchSuggestions).forEach {
                 it.modPadding(top = inset.top + searchBar.height)
             }
         }
@@ -155,7 +183,7 @@ class SearchFragment : Fragment() {
     override fun onDestroy() {
         super.onDestroy()
         for (i in 0 until searchResults.childCount) {
-            (searchResults.getChildViewHolder(searchResults.getChildAt(i)) as ItemCategoryAdapter.BaseHolder)
+            (searchResults.getChildViewHolder(searchResults.getChildAt(i)) as ItemCategoryAdapter.ViewHolder)
                 .dispose()
         }
     }
@@ -165,17 +193,19 @@ class SearchFragment : Fragment() {
         .filterNotNull()
         .toList()
 
-    private fun query(query: String) {
+    private fun query(context: Context, query: String) {
+        val inputMethods = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethods.hideSoftInputFromWindow(searchText.windowToken, 0)
+        searchText.clearFocus()
         lastQuery = query
-        val services = selectedServices()
         viewModel.query(
             lifecycleScope,
-            services,
+            selectedServices(),
             query)
     }
 
     private fun resetUi() {
-        adapter.submitList(null)
+        resultsAdapter.submitList(null)
         searchResults.visibility = View.INVISIBLE
 
         searchResultsShimmer.visibility = View.INVISIBLE
@@ -184,6 +214,8 @@ class SearchFragment : Fragment() {
         searchNoResults.visibility = View.INVISIBLE
 
         searchError.visibility = View.INVISIBLE
+
+        searchSuggestions.visibility = View.INVISIBLE
     }
 
     private fun showFetching() {
@@ -203,11 +235,16 @@ class SearchFragment : Fragment() {
     }
 
     private fun showError(ex: List<Throwable>) {
-        val context = requireContext()
         resetUi()
+        val context = requireContext()
         searchError.visibility = View.VISIBLE
         searchErrorDetails.setOnClickListener {
             ErrorHandler.openActivity(context, ErrorInfo(context, ex))
         }
+    }
+
+    private fun showSuggestions() {
+        resetUi()
+        searchSuggestions.visibility = View.VISIBLE
     }
 }

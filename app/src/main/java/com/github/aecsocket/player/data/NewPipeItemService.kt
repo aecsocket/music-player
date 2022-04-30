@@ -117,34 +117,40 @@ class NewPipeItemService(
         scope: CoroutineScope,
         url: String
     ): List<StreamData> {
-        return when (handle.getLinkTypeByUrl(url)) {
-            StreamingService.LinkType.STREAM -> {
-                val info = StreamInfo.getInfo(handle, url)
-                val transform = streamType(info.uploaderName)
-                listOf(info.asData(this, transform.type, transform.name))
-            }
-            StreamingService.LinkType.PLAYLIST -> {
-                var playlist = PlaylistInfo.getInfo(handle, url)
-                val streams = Array<StreamData?>(playlist.streamCount.toInt()) { null }
-                var idx = 0
-                while (playlist != null) {
-                    playlist.relatedItems.forEach { elem ->
-                        val i = idx
-                        val transform = streamType(elem.uploaderName)
-                        scope.launch {
-                            streams[i] = elem.asData(this@NewPipeItemService, transform.type, transform.name)
-                        }
-                        idx++
-                    }
-                    playlist =
-                        if (playlist.hasNextPage()) PlaylistInfo.getInfo(playlist.nextPage.url)
-                        else null
+        with (scope) {
+            return when (handle.getLinkTypeByUrl(url)) {
+                StreamingService.LinkType.STREAM -> {
+                    val info = StreamInfo.getInfo(handle, url)
+                    val transform = streamType(info.uploaderName)
+                    listOf(info.asData(this@NewPipeItemService, transform.type, transform.name))
                 }
-                // if we failed to get some entries, they'll stay null - just filter them out
-                // TODO maybe log these errors
-                return streams.filterNotNull()
+                StreamingService.LinkType.PLAYLIST -> {
+                    var playlist = PlaylistInfo.getInfo(handle, url)
+                    val streams = Array<StreamData?>(playlist.streamCount.toInt()) { null }
+                    var idx = 0
+                    while (playlist != null) {
+                        playlist.relatedItems.forEach { elem ->
+                            val i = idx
+                            val transform = streamType(elem.uploaderName)
+                            launch {
+                                streams[i] = elem.asData(
+                                    this@NewPipeItemService,
+                                    transform.type,
+                                    transform.name
+                                )
+                            }
+                            idx++
+                        }
+                        playlist =
+                            if (playlist.hasNextPage()) PlaylistInfo.getInfo(playlist.nextPage.url)
+                            else null
+                    }
+                    // if we failed to get some entries, they'll stay null - just filter them out
+                    // TODO maybe log these errors
+                    return streams.filterNotNull()
+                }
+                else -> emptyList()
             }
-            else -> emptyList()
         }
     }
 
@@ -197,6 +203,10 @@ class NewPipeItemService(
             filterSets.map { filters -> async { doFetch(filters) } }.map { it.await() }
             return Errorable(result.map { (type, items) -> ItemCategory(type, items) }, exs)
         }
+    }
+
+    override suspend fun fetchSuggestions(scope: CoroutineScope, query: String): List<String> {
+        return handle.suggestionExtractor.suggestionList(query)
     }
 
     companion object {

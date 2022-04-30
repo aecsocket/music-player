@@ -12,8 +12,8 @@ import kotlinx.coroutines.*
 class ItemCategoryAdapter(
     val queue: StreamQueue,
     val scope: CoroutineScope
-) : ListAdapter<ItemCategory, ItemCategoryAdapter.BaseHolder>(ItemCategory.itemCallback()) {
-    class BaseHolder(
+) : ListAdapter<ItemCategory, ItemCategoryAdapter.ViewHolder>(ItemCategory.itemCallback()) {
+    class ViewHolder(
         val queue: StreamQueue,
         val scope: CoroutineScope,
         binding: ItemSearchCategoryBinding
@@ -45,20 +45,27 @@ class ItemCategoryAdapter(
         }
 
         companion object {
-            fun from(parent: ViewGroup, queue: StreamQueue, scope: CoroutineScope) = BaseHolder(
+            fun from(parent: ViewGroup, queue: StreamQueue, scope: CoroutineScope) = ViewHolder(
                 queue, scope,
                 ItemSearchCategoryBinding.inflate(LayoutInflater.from(parent.context), parent, false))
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-        BaseHolder.from(parent, queue, scope)
+        ViewHolder.from(parent, queue, scope)
 
-    override fun onBindViewHolder(holder: BaseHolder, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bindTo(getItem(position))
     }
 
-    override fun onViewRecycled(holder: BaseHolder) {
+    override fun onViewRecycled(holder: ViewHolder) {
         holder.dispose()
+    }
+
+    override fun onDetachedFromRecyclerView(recycler: RecyclerView) {
+        for (i in 0 until recycler.childCount) {
+            (recycler.getChildViewHolder(recycler.getChildAt(i)) as ViewHolder)
+                .dispose()
+        }
     }
 }

@@ -1,6 +1,5 @@
 package com.github.aecsocket.player.data
 
-import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -38,6 +37,8 @@ class ItemDataAdapter(
             secondary.text = item.secondaryText(context)
             item.art?.into(art)
         }
+
+        open fun update() {}
     }
 
     class StreamHolder(
@@ -48,12 +49,14 @@ class ItemDataAdapter(
     ) {
         val base = binding.item
         val add = binding.itemAdd
+        var mItem: StreamData? = null
 
         override fun bindTo(item: ItemData) {
             super.bindTo(item)
             val player = App.player(view.context)
             if (item !is StreamData)
                 throw IllegalStateException("binding ${item.javaClass.simpleName} to StreamHolder")
+            this.mItem = item
 
             // todo we could compute the index once and use that, but idk
             if (queue.contains(item)) {
@@ -73,8 +76,21 @@ class ItemDataAdapter(
                 player.seekToDefault()
                 player.play()
             }
-            add.setOnClickListener {
-                player.queue.append(item)
+        }
+
+        override fun update() {
+            mItem?.let { item ->
+                if (queue.contains(item)) {
+                    add.setImageResource(R.drawable.ic_check)
+                    add.setOnClickListener {
+                        queue.remove(item)
+                    }
+                } else {
+                    add.setImageResource(R.drawable.ic_list_add)
+                    add.setOnClickListener {
+                        queue.append(item)
+                    }
+                }
             }
         }
 
@@ -139,10 +155,20 @@ class ItemDataAdapter(
     }
 
     private val queueListener = object : StreamQueue.Listener {
-        // TODO update individual items as stream queue changes
-        @SuppressLint("NotifyDataSetChanged") // because... all of the data has changed
-        override fun onClear(size: Int) = notifyDataSetChanged()
+        private fun update() {
+            recycler?.let {
+                for (i in 0 until it.childCount) {
+                    (it.getChildViewHolder(it.getChildAt(i)) as BaseHolder)
+                        .update()
+                }
+            }
+        }
+
+        override fun onAppend(index: Int, size: Int) = update()
+        override fun onRemove(index: Int, elem: StreamData) = update()
+        override fun onClear(size: Int) = update()
     }
+    private var recycler: RecyclerView? = null
 
     init {
         queue.addListener(queueListener)
@@ -167,4 +193,12 @@ class ItemDataAdapter(
 
     override fun onBindViewHolder(holder: BaseHolder, position: Int) =
         holder.bindTo(getItem(position))
+
+    override fun onAttachedToRecyclerView(recycler: RecyclerView) {
+        this.recycler = recycler
+    }
+
+    override fun onDetachedFromRecyclerView(recycler: RecyclerView) {
+        dispose()
+    }
 }
